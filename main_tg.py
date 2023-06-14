@@ -147,8 +147,8 @@ def reply(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 # Define the error function
-def error(update, context):
-    logger.warning('Update "%s" caused error "%s"', update, context.error)
+# def error(update, context):
+#     logger.warning('Update "%s" caused error "%s"', update, context.error)
 def stop(update,context):
     chat_id = update.effective_chat.id
     context.bot.send_message(chat_id=chat_id,text ='Bot stopped')
