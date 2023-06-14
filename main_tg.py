@@ -6,31 +6,6 @@ Created on Mon Mar 27 14:10:04 2023
 """
 import streamlit as st
 
-tg_token = st.secrets['TG_KEY']
-ai_key = st.secrets['AI_KEY']
-deta_key = st.secrets['DETA_KEY']
-
-from functools import wraps
-from deta import Deta
-import logging
-import requests
-import time
-from telegram import (ChatAction)
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import openai
-openai.api_key = ai_key
-
-deta = Deta(deta_key)
-base = deta.Base('messages')
-
-# Set up logging
-logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                     level=logging.INFO)
-
-logger = logging.getLogger(__name__)
-
-
-
 def get_messages(user_id, history):
     if history:
         messages = base.fetch({'username':user_id}).items
@@ -165,20 +140,45 @@ def stop(update,context):
 
 
 # Set up the Telegram bot
-# def main():
-updater = Updater(token=tg_token, use_context=True)
-dp = updater.dispatcher
+def main():
+    updater = Updater(token=tg_token, use_context=True)
+    dp = updater.dispatcher
 
-# Define the handlers
-dp.add_handler(CommandHandler("start", start))
-dp.add_handler(CommandHandler("stop", stop))
-dp.add_handler(CommandHandler("create", create))
-dp.add_handler(MessageHandler(Filters.text, reply))
-dp.add_error_handler(error)
+    # Define the handlers
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("stop", stop))
+    dp.add_handler(CommandHandler("create", create))
+    dp.add_handler(MessageHandler(Filters.text, reply))
+    dp.add_error_handler(error)
 
-# Start the bot
-updater.start_polling()
-updater.idle()
+    # Start the bot
+    updater.start_polling()
+    updater.idle()
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    tg_token = st.secrets['TG_KEY']
+    ai_key = st.secrets['AI_KEY']
+    deta_key = st.secrets['DETA_KEY']
+
+    from functools import wraps
+    from deta import Deta
+    import logging
+    import requests
+    import time
+    from telegram import (ChatAction)
+    from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+    import openai
+    openai.api_key = ai_key
+
+    deta = Deta(deta_key)
+    base = deta.Base('messages')
+    # Set up logging
+    logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        level=logging.INFO)
+
+    logger = logging.getLogger(__name__)
+
+    st.session_state.running = True
+
+    if not st.session_state.running:
+        main()
