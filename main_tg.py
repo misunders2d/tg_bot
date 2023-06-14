@@ -181,5 +181,6 @@ if __name__ == '__main__':
 
     st.session_state.running = True
 
-    if not st.session_state.running:
+    if st.session_state.running:
         main()
+        st.session_state.running = False
