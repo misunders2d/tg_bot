@@ -173,7 +173,7 @@ if 'running' not in st.session_state:
     # dp.add_error_handler(error)
 
     # # Start the bot
-    # updater.start_polling()
+    updater.start_polling()
     # updater.idle()
     
     st.session_state.running = True
