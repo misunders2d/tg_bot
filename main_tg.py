@@ -157,28 +157,28 @@ def main():
     updater.start_polling()
     updater.idle()
 
-if __name__ == '__main__':
-    tg_token = st.secrets['TG_KEY']
-    ai_key = st.secrets['AI_KEY']
-    deta_key = st.secrets['DETA_KEY']
+# if __name__ == '__main__':
+tg_token = st.secrets['TG_KEY']
+ai_key = st.secrets['AI_KEY']
+deta_key = st.secrets['DETA_KEY']
 
-    from deta import Deta
-    import logging
-    import requests
-    import time
-    from telegram import (ChatAction)
-    from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-    import openai
-    openai.api_key = ai_key
+from deta import Deta
+import logging
+import requests
+import time
+from telegram import (ChatAction)
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+import openai
+openai.api_key = ai_key
 
-    deta = Deta(deta_key)
-    base = deta.Base('messages')
-    # Set up logging
-    logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                        level=logging.INFO)
+deta = Deta(deta_key)
+base = deta.Base('messages')
+# Set up logging
+logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
-    logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-    if 'on' not in st.session_state:
-        main()
-        st.session_state.running = 'on'
+if 'running' not in st.session_state:
+    main()
+    st.session_state.running = True
