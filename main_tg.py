@@ -5,6 +5,8 @@ Created on Mon Mar 27 14:10:04 2023
 @author: Sergey
 """
 import streamlit as st
+from functools import wraps
+
 
 def get_messages(user_id, history):
     if history:
@@ -160,7 +162,6 @@ if __name__ == '__main__':
     ai_key = st.secrets['AI_KEY']
     deta_key = st.secrets['DETA_KEY']
 
-    from functools import wraps
     from deta import Deta
     import logging
     import requests
