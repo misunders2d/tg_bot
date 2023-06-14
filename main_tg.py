@@ -177,4 +177,4 @@ if 'running' not in st.session_state:
     # updater.idle()
     
     # st.session_state.running = True
-    st.write(st.session_state.running)
+    st.write(st.session_state)
