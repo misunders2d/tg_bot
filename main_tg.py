@@ -155,15 +155,15 @@ def stop(update,context):
 
 
 if 'running' not in st.session_state:
-    # deta = Deta(deta_key)
-    # base = deta.Base('messages')
+    deta = Deta(deta_key)
+    base = deta.Base('messages')
 
-    # # logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
+    # logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
 
-    # # logger = logging.getLogger(__name__)
+    # logger = logging.getLogger(__name__)
     
-    # updater = Updater(token=tg_token, use_context=True)
-    # dp = updater.dispatcher
+    updater = Updater(token=tg_token, use_context=True)
+    dp = updater.dispatcher
 
     # # Define the handlers
     # dp.add_handler(CommandHandler("start", start))
