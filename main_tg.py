@@ -165,16 +165,16 @@ if 'running' not in st.session_state:
     updater = Updater(token=tg_token, use_context=True)
     dp = updater.dispatcher
 
-    # # Define the handlers
-    # dp.add_handler(CommandHandler("start", start))
-    # dp.add_handler(CommandHandler("stop", stop))
-    # dp.add_handler(CommandHandler("create", create))
-    # dp.add_handler(MessageHandler(Filters.text, reply))
-    # # dp.add_error_handler(error)
+    # Define the handlers
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("stop", stop))
+    dp.add_handler(CommandHandler("create", create))
+    dp.add_handler(MessageHandler(Filters.text, reply))
+    # dp.add_error_handler(error)
 
     # # Start the bot
     # updater.start_polling()
     # updater.idle()
     
-    # st.session_state.running = True
+    st.session_state.running = True
     st.write(st.session_state)
