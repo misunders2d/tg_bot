@@ -8,7 +8,6 @@ import streamlit as st
 
 tg_token = st.secrets['TG_KEY']
 ai_key = st.secrets['AI_KEY']
-# sd_key = 'VtWPgT5PAk46XaqmChvW3VnI9N0N66twgGk3bwfETKGL0I98356mJBngIjAa'
 deta_key = st.secrets['DETA_KEY']
 
 from functools import wraps
