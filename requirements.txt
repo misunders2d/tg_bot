@@ -1,0 +1,4 @@
+deta
+openai
+python-telegram-bot==13.13
+streamlit
