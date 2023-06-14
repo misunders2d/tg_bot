@@ -182,4 +182,4 @@ logger = logging.getLogger(__name__)
 if 'running' not in st.session_state:
     main()
     st.session_state.running = True
-    print(st.session_state.running)
+    st.write(st.session_state.running)
