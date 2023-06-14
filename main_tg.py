@@ -7,7 +7,7 @@ Created on Mon Mar 27 14:10:04 2023
 import streamlit as st
 from functools import wraps
 from deta import Deta
-import logging
+# import logging
 import requests
 import time
 from telegram import (ChatAction)
@@ -158,9 +158,9 @@ if 'running' not in st.session_state:
     deta = Deta(deta_key)
     base = deta.Base('messages')
 
-    logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
+    # logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
 
-    logger = logging.getLogger(__name__)
+    # logger = logging.getLogger(__name__)
     
     updater = Updater(token=tg_token, use_context=True)
     dp = updater.dispatcher
