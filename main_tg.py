@@ -179,8 +179,6 @@ if __name__ == '__main__':
 
     logger = logging.getLogger(__name__)
 
-    st.session_state.running = True
-
-    if st.session_state.running:
+    if 'on' not in st.session_state:
         main()
-        st.session_state.running = False
+        st.session_state.running = 'on'
