@@ -174,7 +174,7 @@ if 'running' not in st.session_state:
 
     # # Start the bot
     updater.start_polling()
-    # updater.idle()
+    updater.idle()
     
     st.session_state.running = True
     st.write(st.session_state)
