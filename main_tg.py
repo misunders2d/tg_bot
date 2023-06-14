@@ -155,26 +155,26 @@ def stop(update,context):
 
 
 if 'running' not in st.session_state:
-    deta = Deta(deta_key)
-    base = deta.Base('messages')
+    # deta = Deta(deta_key)
+    # base = deta.Base('messages')
 
-    # logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
+    # # logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
 
-    # logger = logging.getLogger(__name__)
+    # # logger = logging.getLogger(__name__)
     
-    updater = Updater(token=tg_token, use_context=True)
-    dp = updater.dispatcher
+    # updater = Updater(token=tg_token, use_context=True)
+    # dp = updater.dispatcher
 
-    # Define the handlers
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("stop", stop))
-    dp.add_handler(CommandHandler("create", create))
-    dp.add_handler(MessageHandler(Filters.text, reply))
-    # dp.add_error_handler(error)
+    # # Define the handlers
+    # dp.add_handler(CommandHandler("start", start))
+    # dp.add_handler(CommandHandler("stop", stop))
+    # dp.add_handler(CommandHandler("create", create))
+    # dp.add_handler(MessageHandler(Filters.text, reply))
+    # # dp.add_error_handler(error)
 
-    # Start the bot
-    updater.start_polling()
-    updater.idle()
+    # # Start the bot
+    # updater.start_polling()
+    # updater.idle()
     
-    st.session_state.running = True
-st.write(st.session_state.running)
+    # st.session_state.running = True
+    st.write(st.session_state.running)
