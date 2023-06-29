@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 tg_token = '6187435631:AAGuIcnDZkCZ5O9emyUJBuR7x42TPN4CbYg'
-ai_key = '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'
+ai_key = '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'
 deta_key = 'a0qn14jpjbf_vPWu4b54xH4pgEW3ogAFqjLPEPRs6dnd'
 
 deta = Deta(deta_key)
