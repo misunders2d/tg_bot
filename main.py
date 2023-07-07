@@ -1,6 +1,7 @@
 from deta import Deta
 import openai
 import time
+import logging
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
@@ -9,10 +10,30 @@ tg_token = '6187435631:AAGuIcnDZkCZ5O9emyUJBuR7x42TPN4CbYg'
 ai_key = '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'
 deta_key = 'a0qn14jpjbf_vPWu4b54xH4pgEW3ogAFqjLPEPRs6dnd'
 
+GPT_MODEL = 'gpt-4'#'gpt-3.5-turbo'
+
 deta = Deta(deta_key)
 base = deta.Base('messages')
+users = deta.Base('users')
 
 openai.api_key = ai_key
+
+# Define the error function
+def error(update, context):
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
+
+def check_chat_id(chat_id = None, result = 'chat'):
+    user_chats = users.fetch().items
+    if result == 'chat':
+        if chat_id in [chat['chat_id'] for chat in user_chats]:
+            return True
+        else:
+            return False
+    elif result == 'push':
+        return [x['chat_id'] for x in user_chats]
+    elif result == 'users':
+        return '\n'.join([x['username'] for x in user_chats])
+
 
 def get_messages(user_id, history):
     if history:
@@ -30,6 +51,7 @@ async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def start(update, context):
     chat_id = update.effective_chat.id
+    user_id = update.effective_chat.username
     await context.bot.send_message(chat_id=chat_id,text =f"Hi, I'm your ChatGPT bot. How can I help you?\n{chat_id}")
 
 async def create(update,context):
@@ -95,6 +117,8 @@ async def create(update,context):
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     user_id = update.effective_chat.username
+    if not check_chat_id(chat_id):
+        users.insert({'username':user_id,'chat_id':chat_id},)
     try:
         user_message = update.message.text
     except:
@@ -108,22 +132,40 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
     if all([any([chat_id>0,bot_username in user_message]),'/create' not in user_message]):
-        if f'messages_{user_id}' not in globals():
-            globals()[f'messages_{user_id}'] = get_messages(user_id, history = True)
-        globals()[f'messages_{user_id}'].append({'role':'user','content':user_message})
-        globals()[f'messages_{user_id}'] = globals()[f'messages_{user_id}'][-6:]
-        base.insert({'username':user_id,'message':globals()[f'messages_{user_id}'][-1],'time':int(time.time())})
-        response = openai.ChatCompletion.create(
-        model = 'gpt-3.5-turbo',#'text-davinci-003',
-        messages =  globals()[f'messages_{user_id}'],
-        temperature=0.9,
-        max_tokens=1000
-        )
-        message = response['choices'][0]['message']['content'].strip()
-        globals()[f'messages_{user_id}'].append({'role':'assistant','content':message})
-        base.insert({'username':user_id,'message':globals()[f'messages_{user_id}'][-1],'time':int(time.time())})
+        try:
+            if f'messages_{user_id}' not in globals():
+                globals()[f'messages_{user_id}'] = get_messages(user_id, history = True)
+            globals()[f'messages_{user_id}'].append({'role':'user','content':user_message})
+            globals()[f'messages_{user_id}'] = globals()[f'messages_{user_id}'][-10:]
+            base.insert({'username':user_id,'message':globals()[f'messages_{user_id}'][-1],'time':int(time.time())})
+            response = openai.ChatCompletion.create(
+            model = GPT_MODEL,
+            messages =  globals()[f'messages_{user_id}'],
+            temperature=0.9,
+            max_tokens=1000
+            )
+            message = response['choices'][0]['message']['content'].strip()
+            globals()[f'messages_{user_id}'].append({'role':'assistant','content':message})
+            base.insert({'username':user_id,'message':globals()[f'messages_{user_id}'][-1],'time':int(time.time())})
+        except Exception as e:
+            message = f'Sorry, the following error occurred:\n{e}'
 
     await update.message.reply_text(message)
+
+async def push(update, context):
+    chat_ids = check_chat_id(chat_id = None, result = 'push')
+    for chat in chat_ids:
+        await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push',''))
+
+async def usernames(update, context):
+    chat_id = update.effective_chat.id
+    usernames = check_chat_id(chat_id = None, result = 'users')
+    await context.bot.send_message(chat_id = chat_id, text = usernames)
+
+
+logging.basicConfig(format='\n%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 
 app = ApplicationBuilder().token(tg_token).build()
@@ -131,6 +173,11 @@ app = ApplicationBuilder().token(tg_token).build()
 app.add_handler(CommandHandler("hello", hello))
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("create", create))
+app.add_handler(CommandHandler("push", push))
+app.add_handler(CommandHandler("users", usernames))
+
+
+app.add_error_handler(error)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply))
 
 app.run_polling()
