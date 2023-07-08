@@ -16,9 +16,9 @@ def access_secret_version(project_id, secret_id, version_id):
 
 project_id = 'tg-bot-392213'
 
-tg_token = access_secret_version(project_id, 'TG_KEY', 'latest')
-ai_key = access_secret_version(project_id, 'AI_KEY', 'latest')
-deta_key = access_secret_version(project_id, 'DB_USERS', 'latest')
+tg_token = access_secret_version(project_id, 'TG_KEY', 1)
+ai_key = access_secret_version(project_id, 'AI_KEY', 1)
+deta_key = access_secret_version(project_id, 'DB_USERS', 1)
 
 GPT_MODEL = 'gpt-4'#'gpt-3.5-turbo'
 
