@@ -1,3 +1,2 @@
-yaml
 runtime: python39
 entrypoint: python main.py
