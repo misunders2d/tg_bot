@@ -2,13 +2,14 @@ from deta import Deta
 import openai
 import time
 import logging
+import streamlit as st
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-tg_token = '6187435631:AAGuIcnDZkCZ5O9emyUJBuR7x42TPN4CbYg'
-ai_key = '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'
-deta_key = 'a0qn14jpjbf_vPWu4b54xH4pgEW3ogAFqjLPEPRs6dnd'
+tg_token = st.secrets['TG_KEY']
+ai_key = st.secrets['AI_KEY']
+deta_key = st.secrets['DB_USERS']
 
 GPT_MODEL = 'gpt-4'#'gpt-3.5-turbo'
 
