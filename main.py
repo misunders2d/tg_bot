@@ -16,9 +16,9 @@ def access_secret_version(project_id, secret_id, version_id):
 
 project_id = 'tg-bot-392213'
 
-tg_token = access_secret_version(project_id, 'TG_KEY', 1)
-ai_key = access_secret_version(project_id, 'AI_KEY', 1)
-deta_key = access_secret_version(project_id, 'DB_USERS', 1)
+tg_token = access_secret_version(project_id, 'TG_KEY', 'latest')
+ai_key = access_secret_version(project_id, 'AI_KEY', 'latest')
+deta_key = access_secret_version(project_id, 'DB_USERS', 'latest')
 
 GPT_MODEL = 'gpt-4'#'gpt-3.5-turbo'
 
@@ -42,7 +42,7 @@ def check_chat_id(chat_id = None, result = 'chat'):
     elif result == 'push':
         return [x['chat_id'] for x in user_chats]
     elif result == 'users':
-        return '\n'.join([x['username'] for x in user_chats])
+        return '\n'.join([x['username'] for x in user_chats if x is not None])
 
 
 def get_messages(user_id, history):
@@ -165,7 +165,7 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def push(update, context):
     chat_ids = check_chat_id(chat_id = None, result = 'push')
     for chat in chat_ids:
-        await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push',''))
+        await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
 
 async def usernames(update, context):
     chat_id = update.effective_chat.id
