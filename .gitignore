@@ -188,4 +188,6 @@ cython_debug/
 # project files
 .vscode
 .space
+config.py
+
 >>>>>>> master
