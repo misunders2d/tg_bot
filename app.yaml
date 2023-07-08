@@ -1,4 +1,4 @@
 runtime: python39
 entrypoint: python main.py
 automatic_scaling:
-- min_idle_instances: 1
+  min_idle_instances: 1
