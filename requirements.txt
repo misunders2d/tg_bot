@@ -1,4 +1,3 @@
 python-telegram-bot
 deta
 openai
-google-cloud-secret-manager

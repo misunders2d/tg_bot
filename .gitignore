@@ -189,5 +189,3 @@ cython_debug/
 .vscode
 .space
 >>>>>>> master
-config.ini
-config.py
