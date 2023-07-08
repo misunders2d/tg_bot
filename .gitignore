@@ -190,3 +190,4 @@ cython_debug/
 .space
 >>>>>>> master
 config.ini
+config.py
