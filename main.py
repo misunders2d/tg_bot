@@ -2,7 +2,6 @@ from deta import Deta
 import openai
 import time
 import logging
-import streamlit as st
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
