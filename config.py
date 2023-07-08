@@ -1,3 +1,3 @@
 DB_USERS = 'a0bc7xb753v_mcmdiBnc2rm6G9341fPNW4uV5S3cqg2x'
-AI_KEY = 'new'
+AI_KEY = 'new2'
 TG_KEY = '6187435631:AAE2r6MUeLMMWgCpy8qmKLPJ3W7vwv5RnVA'
