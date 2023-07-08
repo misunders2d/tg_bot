@@ -3,23 +3,9 @@ import openai
 import time
 import logging
 from config import DB_USERS, AI_KEY, TG_KEY
-# from google.cloud import secretmanager
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
-
-
-# def access_secret_version(project_id, secret_id, version_id):
-#     client = secretmanager.SecretManagerServiceClient()
-#     secret_name = client.secret_version_path(project_id, secret_id, version_id)
-#     response = client.access_secret_version(request={"name": secret_name})
-#     return response.payload.data.decode('UTF-8')
-
-# project_id = 'tg-bot-392213'
-
-# tg_token = access_secret_version(project_id, 'TG_KEY', 1)
-# ai_key = access_secret_version(project_id, 'AI_KEY', 1)
-# deta_key = access_secret_version(project_id, 'DB_USERS', 1)
 
 tg_token = TG_KEY
 ai_key = AI_KEY
