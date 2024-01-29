@@ -12,7 +12,7 @@ ai_key = AI_KEY
 deta_key = DB_USERS
 
 
-GPT_MODEL = 'gpt-4-1106-preview'#'gpt-3.5-turbo'
+GPT_MODEL = 'gpt-4-0125-preview'#'gpt-3.5-turbo'
 
 deta = Deta(deta_key)
 base = deta.Base('messages')
