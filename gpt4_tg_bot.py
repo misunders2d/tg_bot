@@ -1,6 +1,6 @@
 from deta import Deta
 from openai import OpenAI
-import time, os
+import time, os, requests
 import logging
 from dotenv import load_dotenv
 # from config import DB_USERS, AI_KEY, TG_KEY
