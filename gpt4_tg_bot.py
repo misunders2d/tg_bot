@@ -1,15 +1,16 @@
 from deta import Deta
 from openai import OpenAI
-import time
+import time, os
 import logging
-from config import DB_USERS, AI_KEY, TG_KEY
+from dotenv import load_dotenv
+# from config import DB_USERS, AI_KEY, TG_KEY
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-tg_token = TG_KEY
-ai_key = AI_KEY
-deta_key = DB_USERS
+tg_token = os.getenv('TG_KEY')
+ai_key = os.getenv('AI_KEY')
+deta_key = os.getenv('DB_USERS')
 
 
 GPT_MODEL = 'gpt-4-0125-preview'#'gpt-3.5-turbo'
@@ -78,6 +79,7 @@ async def create(update,context):
             image_url_dall_e = response.data[0].url
             await context.bot.send_message(chat_id=chat_id,text ="Here's what DALL-E came up with")
             await context.bot.send_photo(chat_id=update.effective_chat.id, photo = image_url_dall_e)
+            await context.bot.send_message(chat_id=chat_id,text =f"Revised prompt:\n{response.data[0].revised_prompt}")
             
             # context.bot.send_message(chat_id=chat_id,text ="And give me a couple of seconds...")
         except Exception as e:
@@ -133,7 +135,10 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     time.sleep(1)
                     await update.message.reply_text(split_message)
             else:
-                await update.message.reply_text(message)
+                try:
+                    await update.message.reply_text(message)
+                except Exception as e:
+                    await update.message.reply_text(f'Sorry, the following error occurred:\n{e}')
         except Exception as e:
             await update.message.reply_text(f'Sorry, the following error occurred:\n{e}')
 

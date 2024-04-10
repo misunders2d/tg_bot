@@ -1,3 +1,4 @@
 python-telegram-bot
 deta
 openai
+python-dotenv
