@@ -50,7 +50,7 @@ def get_messages(user_id, history):
     return messages
 
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(f'Hello {update.effective_user.first_name}')
+    await update.message.reply_text(f"Hello {update.effective_user.first_name}")
 
 async def start(update, context):
     chat_id = update.effective_chat.id
