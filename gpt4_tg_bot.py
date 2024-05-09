@@ -1,9 +1,9 @@
 from deta import Deta
 from openai import OpenAI
-import time, os, requests
+import time, os
 import logging
 from dotenv import load_dotenv
-# from config import DB_USERS, AI_KEY, TG_KEY
+load_dotenv()
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
