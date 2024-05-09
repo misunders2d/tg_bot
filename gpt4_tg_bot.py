@@ -113,7 +113,7 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 model = GPT_MODEL,
                 messages =  globals()[f'messages_{user_id}'],
                 temperature=0.9,
-                max_tokens=3000 if '\max_tokens' in user_message else 1000
+                max_tokens=3000 if r'\max_tokens' in user_message else 1000
             )
             message = response.choices[0].message.content.strip()
             globals()[f'messages_{user_id}'].append({'role':'assistant','content':message})
