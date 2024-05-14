@@ -13,7 +13,7 @@ ai_key = os.getenv('AI_KEY')
 deta_key = os.getenv('DB_USERS')
 
 
-GPT_MODEL = 'gpt-4-0125-preview'#'gpt-3.5-turbo'
+GPT_MODEL = 'gpt-4o'#'gpt-4-0125-preview'#'gpt-3.5-turbo'
 
 deta = Deta(deta_key)
 base = deta.Base('messages')
