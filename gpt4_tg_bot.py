@@ -14,6 +14,7 @@ deta_key = os.getenv('DB_USERS')
 
 
 GPT_MODEL = 'gpt-4o'#'gpt-4-0125-preview'#'gpt-3.5-turbo'
+MAX_TOKENS = 16000
 
 deta = Deta(deta_key)
 base = deta.Base('messages')
@@ -113,7 +114,7 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 model = GPT_MODEL,
                 messages =  globals()[f'messages_{user_id}'],
                 temperature=0.9,
-                max_tokens=3000 if r'\max_tokens' in user_message else 1000
+                max_tokens=3000 if r'\max_tokens' in user_message else MAX_TOKENS
             )
             message = response.choices[0].message.content.strip()
             globals()[f'messages_{user_id}'].append({'role':'assistant','content':message})
