@@ -54,15 +54,23 @@ def generate_response(user_input: str, current_thread: str, voice: bool = False)
     )
 
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    files = []
     chat_id: str = str(update.message.chat.id)
     current_thread = retrieve_thread(chat_id)
-    text = update.message.caption
+
     media_files = update.message.photo
-    images = [await context.bot.getFile(media.file_id) for _,media in enumerate(media_files)]
-    image_paths = images[-1].file_path
-
-
-    # print(images[-1].file_path)
+    images = [files.append(await context.bot.getFile(media.file_id)) for _,media in enumerate(media_files)]
+    print(files)
+    # image_paths = [x for x in [images[-1].file_path]]
+    # files.append(image_paths)
+    # print(files)
+    # image_info = workers.image(
+    #     image_paths, caption, client,
+    #     assistant_id = ASSISTANT_ID,
+    #     thread_id=current_thread.id,
+    #     voice = False)
+    # print(image_info)
+    # await update.message.reply_text(image_info)
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id: str = str(update.message.chat.id)

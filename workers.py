@@ -10,8 +10,9 @@ def check_thread(chat_id, deta_base):
 def push_thread(chat_id, thread_id, deta_base):
     deta_base.Base('chat_ids').put(key = chat_id, data = {'thread':thread_id})
 
-def text(text_input, client, assistant_id, thread_id, voice = False):
-    messages = [{'type':'text','text':text_input}]
+def text(text_input, client, assistant_id, thread_id, voice = False, messages = None):
+    if not messages:
+        messages = [{'type':'text','text':text_input}]
     _ = client.beta.threads.messages.create(
         thread_id = thread_id,
         content = messages,
@@ -41,12 +42,28 @@ def text(text_input, client, assistant_id, thread_id, voice = False):
         voice_response.name = 'response.ogg'
     return voice_response
 
-def image(images: List, text: str, client, assistant_id: str, thread_id: str):
+def process_photo_message(message):
+    full_list = []
+    media = message.photo
+    for _, item in media:
+        full_list.append(item)
+    return full_list
+
+def image(images: List, caption: str, client, assistant_id: str, thread_id: str, voice: bool = False):
     assert isinstance(images, list)
-    if not text:
-        text = 'What is in these images?'
-    messages = [{'type':'text','text':text}]
-    
+    if not caption:
+        caption = 'What is in these images?'
+    messages = [{'type':'text','text':caption}]
+    exension = [{'type':'image_url', 'image_url':{'url':img_url}} for img_url in images]
+    messages.extend(exension)
+    response = text(
+        text_input = None,
+        client = client,
+        assistant_id = assistant_id,
+        thread_id = thread_id,
+        voice = False,
+        messages = messages)
+    return response
 
 
 def transcribe_audio(voice_input, client):
