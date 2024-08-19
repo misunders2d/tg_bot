@@ -59,7 +59,7 @@ def generate_response(user_input: str, current_thread: str, voice: bool = False)
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
-    text: str = update.message.text
+    text: str = update.message.caption
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
         current_thread = retrieve_thread(chat_id)
         await send_action(chat_id, context, type = 'typing')
