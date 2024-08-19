@@ -4,7 +4,7 @@ load_dotenv('.env')
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-import os, requests
+import os, requests, asyncio
 from io import BytesIO
 from typing import Final, Literal
 
@@ -22,13 +22,12 @@ DETA_ID: Final = os.getenv('DETA_KEY')
 client = OpenAI(api_key = OPENAI_KEY)
 
 deta_base = Deta(DETA_ID)
-# client.beta.threads.delete('thread_fSravSQAjuQw0HwKQMjeKKmH')
 
 current_sessions = {}
 
 # Command to provide help information
 async def assist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Here comes the help')
+    await update.message.reply_text('Here comes the help', parse_mode='Markdown')
 
 def retrieve_thread(chat_id):
     if chat_id not in current_sessions:
@@ -44,7 +43,7 @@ def retrieve_thread(chat_id):
 
 async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal['typing','recording'] = 'typing'):
     """Function to send 'typing...' action."""
-    await context.bot.send_chat_action(chat_id, action=type,)
+    await context.bot.send_chat_action(chat_id, action=type)
 
 def generate_response(user_input: str, current_thread: str, voice: bool = False) -> str:
     normalized_input: str = user_input.lower()
@@ -69,7 +68,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         assistant_id = ASSISTANT_ID,
         thread_id=current_thread.id,
         voice = False)
-    await update.message.reply_text(image_info)
+    await update.message.reply_text(image_info, parse_mode='Markdown')
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id: str = str(update.message.chat.id)
@@ -103,7 +102,7 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response: str = generate_response(text, current_thread)
 
     # Reply to the user
-    await update.message.reply_text(response)
+    await update.message.reply_text(response, parse_mode='Markdown')
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat.id
@@ -144,9 +143,7 @@ async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused error {context.error}')
 
-
-# Start the bot
-if __name__ == '__main__':
+def main():
     app = Application.builder().token(TG_KEY).build()
 
     # Register command handlers
@@ -167,3 +164,8 @@ if __name__ == '__main__':
     print('Starting polling...')
     # Run the bot
     app.run_polling(poll_interval=2)
+
+
+# Start the bot
+if __name__ == '__main__':
+    main()
