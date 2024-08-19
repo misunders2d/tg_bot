@@ -90,15 +90,16 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text: str = update.message.text
 
     current_thread = retrieve_thread(chat_id)
-    await send_action(chat_id, context, type = 'typing')
     # Handle group messages only if bot is mentioned
     if chat_type == 'group':
         if BOT_HANDLE in text:
+            await send_action(chat_id, context, type = 'typing')
             cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
             response: str = generate_response(cleaned_text, current_thread)
         else:
             return  # Ignore messages where bot is not mentioned in a group
     else:
+        await send_action(chat_id, context, type = 'typing')
         response: str = generate_response(text, current_thread)
 
     # Reply to the user
@@ -112,8 +113,8 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_message = update.message.text
     except:
         user_message = ''
-    await context.bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
     if (chat_type == 'group' and BOT_HANDLE in user_message) or True:
+        await context.bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
         prompt = user_message.replace('/create ','')
         try:
             #DALL-E generation:
