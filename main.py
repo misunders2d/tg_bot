@@ -85,7 +85,7 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
-    chat_id: int = update.message.chat.id
+    chat_id: str = str(update.message.chat.id)
     text: str = update.message.text
 
     current_thread = retrieve_thread(chat_id)
