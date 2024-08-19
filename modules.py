@@ -2,15 +2,15 @@ import time
 from typing import List
 from openai import OpenAI
 from io import BytesIO
-import deta
+from deta import Deta
 
-def check_thread(chat_id: str, deta_base: deta.Deta):
+def check_thread(chat_id: str, deta_base: Deta):
     result = deta_base.Base('chat_ids').fetch({"key":chat_id}).items
     if len(result)>0:
         return result[0]['thread']
     return False
 
-def push_thread(chat_id: str, thread_id: str, deta_base: deta.Deta):
+def push_thread(chat_id: str, thread_id: str, deta_base: Deta):
     deta_base.Base('chat_ids').put(key = chat_id, data = {'thread':thread_id})
 
 def process_text(text_input: str, client: OpenAI, assistant_id: str, thread_id: str, voice: bool = False, messages: List[dict] = None):

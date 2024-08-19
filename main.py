@@ -104,6 +104,40 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Reply to the user
     await update.message.reply_text(response)
 
+async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat.id
+    chat_type: str = update.message.chat.type
+
+    try:
+        user_message = update.message.text
+    except:
+        user_message = ''
+    await context.bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
+    if (chat_type == 'group' and BOT_HANDLE in user_message) or True:
+        prompt = user_message.replace('/create ','')
+        try:
+            #DALL-E generation:
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                n=1,
+                size="1024x1024"
+                )
+            image_url_dall_e = response.data[0].url
+            await context.bot.send_message(chat_id=chat_id,text ="Here's what DALL-E came up with")
+            await context.bot.send_photo(chat_id=update.effective_chat.id, photo = image_url_dall_e)
+            await context.bot.send_message(chat_id=chat_id,text =f"Revised prompt:\n{response.data[0].revised_prompt}")
+        except Exception as e:
+            await context.bot.send_message(chat_id=chat_id,text =f"Oops, this didn't work out, here's the error message\n{e}")
+        
+def get_chat_ids(deta_base: Deta = deta_base):
+    result = deta_base.Base('chat_ids').fetch().items
+    return [x['key'] for x in result]
+
+async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_ids = get_chat_ids(deta_base=deta_base)
+    for chat in chat_ids:
+        await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
 
 # Log errors
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -116,6 +150,8 @@ if __name__ == '__main__':
 
     # Register command handlers
     app.add_handler(CommandHandler('help', assist_command))
+    app.add_handler(CommandHandler('create', create))
+    app.add_handler(CommandHandler('push', push))
 
     # Register message handler
     app.add_handler(MessageHandler(filters.TEXT, process_message))
