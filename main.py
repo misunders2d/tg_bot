@@ -4,9 +4,9 @@ load_dotenv('.env')
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-import os, requests, pickle
+import os, requests
 from io import BytesIO
-from typing import Final
+from typing import Final, Literal
 
 from deta import Deta
 from openai import OpenAI
@@ -42,10 +42,14 @@ def retrieve_thread(chat_id):
         current_thread = current_sessions.get(chat_id)
     return current_thread
 
+async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal['typing','recording'] = 'typing'):
+    """Function to send 'typing...' action."""
+    await context.bot.send_chat_action(chat_id, action=type,)
+
 def generate_response(user_input: str, current_thread: str, voice: bool = False) -> str:
     normalized_input: str = user_input.lower()
 
-    return modules.text(
+    return modules.process_text(
         text_input = normalized_input, 
         client = client,
         assistant_id=ASSISTANT_ID,
@@ -56,7 +60,7 @@ def generate_response(user_input: str, current_thread: str, voice: bool = False)
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id: str = str(update.message.chat.id)
     current_thread = retrieve_thread(chat_id)
-
+    await send_action(chat_id, context, type = 'typing')
     media_file = update.message.photo[-1]
     caption = update.message.caption
     media_url = await context.bot.getFile(media_file.file_id)
@@ -70,6 +74,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id: str = str(update.message.chat.id)
     voice = await context.bot.getFile(update.message.voice.file_id)
+    await send_action(chat_id, context, type = 'record_audio')
     voice_file = requests.get(voice.file_path)
     voice_bytes = BytesIO(voice_file.content)
     voice_bytes.name = 'voice.ogg'
@@ -85,7 +90,7 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text: str = update.message.text
 
     current_thread = retrieve_thread(chat_id)
-
+    await send_action(chat_id, context, type = 'typing')
     # Handle group messages only if bot is mentioned
     if chat_type == 'group':
         if BOT_HANDLE in text:
