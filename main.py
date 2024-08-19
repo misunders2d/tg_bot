@@ -87,6 +87,7 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     text: str = update.message.text
+    print(chat_type)
 
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
