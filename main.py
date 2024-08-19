@@ -16,7 +16,7 @@ import modules
 ASSISTANT_ID: Final = os.getenv('ASSISTANT_ID')
 OPENAI_KEY: Final = os.getenv('AI_KEY')
 TG_KEY: Final = os.getenv('TG_KEY')
-BOT_HANDLE = '@my_temp_bot_for_testing_bot'
+BOT_HANDLE = os.getenv('BOT_HANDLE')
 DETA_ID: Final = os.getenv('DETA_KEY')
 
 client = OpenAI(api_key = OPENAI_KEY)
