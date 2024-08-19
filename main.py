@@ -57,31 +57,37 @@ def generate_response(user_input: str, current_thread: str, voice: bool = False)
     )
 
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
-    current_thread = retrieve_thread(chat_id)
-    await send_action(chat_id, context, type = 'typing')
-    media_file = update.message.photo[-1]
-    caption = update.message.caption
-    media_url = await context.bot.getFile(media_file.file_id)
-    image_info = modules.image(
-        media_url.file_path, caption, client,
-        assistant_id = ASSISTANT_ID,
-        thread_id=current_thread.id,
-        voice = False)
-    await update.message.reply_text(image_info, parse_mode='Markdown')
+    text: str = update.message.text
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
+        current_thread = retrieve_thread(chat_id)
+        await send_action(chat_id, context, type = 'typing')
+        media_file = update.message.photo[-1]
+        caption = update.message.caption
+        media_url = await context.bot.getFile(media_file.file_id)
+        image_info = modules.image(
+            media_url.file_path, caption, client,
+            assistant_id = ASSISTANT_ID,
+            thread_id=current_thread.id,
+            voice = False)
+        await update.message.reply_text(image_info, parse_mode='Markdown')
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
-    voice = await context.bot.getFile(update.message.voice.file_id)
-    await send_action(chat_id, context, type = 'record_audio')
-    voice_file = requests.get(voice.file_path)
-    voice_bytes = BytesIO(voice_file.content)
-    voice_bytes.name = 'voice.ogg'
-    voice_bytes.seek(0)
-    text_version = modules.transcribe_audio(voice_bytes, client = client)
-    current_thread = retrieve_thread(chat_id)
-    bot_response = generate_response(text_version, current_thread, voice = True)
-    await update.message.reply_voice(voice = bot_response)
+    text: str = update.message.text
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
+        voice = await context.bot.getFile(update.message.voice.file_id)
+        await send_action(chat_id, context, type = 'record_audio')
+        voice_file = requests.get(voice.file_path)
+        voice_bytes = BytesIO(voice_file.content)
+        voice_bytes.name = 'voice.ogg'
+        voice_bytes.seek(0)
+        text_version = modules.transcribe_audio(voice_bytes, client = client)
+        current_thread = retrieve_thread(chat_id)
+        bot_response = generate_response(text_version, current_thread, voice = True)
+        await update.message.reply_voice(voice = bot_response)
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
@@ -90,31 +96,26 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
-    if chat_type in ('supergroup','group'):
-        if BOT_HANDLE in text:
-            await send_action(chat_id, context, type = 'typing')
-            cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
-            response: str = generate_response(cleaned_text, current_thread)
-        else:
-            return  # Ignore messages where bot is not mentioned in a group
-    else:
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
         await send_action(chat_id, context, type = 'typing')
+        cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
+        response: str = generate_response(cleaned_text, current_thread)
         response: str = generate_response(text, current_thread)
 
-    # Reply to the user
-    await update.message.reply_text(response, parse_mode='Markdown')
+        # Reply to the user
+        await update.message.reply_text(response, parse_mode='Markdown')
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat.id
     chat_type: str = update.message.chat.type
 
     try:
-        user_message = update.message.text
+        text = update.message.text
     except:
-        user_message = ''
-    if (chat_type == 'group' and BOT_HANDLE in user_message) or True:
+        text = ''
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
         await context.bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
-        prompt = user_message.replace('/create ','')
+        prompt = text.replace('/create ','')
         try:
             #DALL-E generation:
             response = client.images.generate(
