@@ -41,7 +41,7 @@ def process_text(text_input: str, client: OpenAI, assistant_id: str, thread_id: 
     else:
         voice_response = client.audio.speech.create(
         model="tts-1",
-        voice="nova",
+        voice="onyx",
         input=response
         )
         voice_response = BytesIO(voice_response.content)
