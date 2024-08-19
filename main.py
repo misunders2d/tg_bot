@@ -84,13 +84,13 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_voice(voice = bot_response)
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # chat_type: str = update.message.chat.type
+    chat_type: str = update.message.chat.type
     chat_id: int = update.message.chat.id
     text: str = update.message.text
 
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
-    if chat_id > 0:
+    if chat_type in ('SUPERGROUP','GROUP'):
         if BOT_HANDLE in text:
             await send_action(chat_id, context, type = 'typing')
             cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
