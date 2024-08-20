@@ -10,6 +10,7 @@ from typing import Final, Literal
 
 from deta import Deta
 from openai import OpenAI
+from openai.types.beta.thread import Thread
 
 import modules
 
@@ -29,23 +30,22 @@ current_sessions = {}
 async def assist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Here comes the help', parse_mode='Markdown')
 
-def retrieve_thread(chat_id):
-    if chat_id not in current_sessions:
+def retrieve_thread(chat_id: str) -> Thread:
+    """function to retrieve tg chat's message thread from openai or create a new one if the chat is new to the bot"""
+    if not (current_thread:= current_sessions.get(chat_id)):
         if not (chat_thread_id:=modules.check_thread(chat_id, deta_base)):
             chat_thread = client.beta.threads.create()
             chat_thread_id = chat_thread.id
             modules.push_thread(chat_id, chat_thread_id, deta_base)
         current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id)
         current_sessions.update({chat_id:current_thread})
-    else:
-        current_thread = current_sessions.get(chat_id)
     return current_thread
 
 async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal['typing','recording'] = 'typing'):
     """Function to send 'typing...' action."""
     await context.bot.send_chat_action(chat_id, action=type, )
 
-def generate_response(user_input: str, current_thread: str, voice: bool = False) -> str:
+def generate_response(user_input: str, current_thread: Thread, voice: bool = False) -> str:
     normalized_input: str = user_input.lower()
 
     return modules.process_text(
@@ -102,7 +102,6 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_action(chat_id, context, type = 'typing')
         cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
         response: str = generate_response(cleaned_text, current_thread)
-        response: str = generate_response(text, current_thread)
 
         # Reply to the user
         await update.message.reply_text(response, parse_mode='Markdown')

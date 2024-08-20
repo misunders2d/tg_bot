@@ -31,6 +31,7 @@ def process_text(text_input: str, client: OpenAI, assistant_id: str, thread_id: 
             time.sleep(0.5)
             current_run = client.beta.threads.runs.retrieve(thread_id = thread_id, run_id = current_run.id)
             current_status = current_run.status
+            print(current_status)
         thread_messages = client.beta.threads.messages.list(thread_id)
         response = thread_messages.data[0].content[0].text.value
     except Exception as e:
