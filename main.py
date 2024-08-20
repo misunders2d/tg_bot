@@ -60,7 +60,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     if not (text:= update.message.caption):
-        text = ''
+        text = 'What is in these images?'
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
         current_thread = retrieve_thread(chat_id)
         await send_action(chat_id, context, type = 'typing')
@@ -77,7 +77,8 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
-    text: str = update.message.text
+    if not (text:= update.message.caption):
+        text = ''
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
         voice = await context.bot.getFile(update.message.voice.file_id)
         await send_action(chat_id, context, type = 'record_audio')
@@ -93,8 +94,8 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
-    text: str = update.message.text
-
+    if not (text:= update.message.text):
+        text = 'What is in these images?'
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
@@ -109,11 +110,8 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat.id
     chat_type: str = update.message.chat.type
-
-    try:
-        text = update.message.text
-    except:
-        text = ''
+    if not (text:= update.message.text):
+        text = 'What is in these images?'
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
         await context.bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
         prompt = text.replace('/create ','')
