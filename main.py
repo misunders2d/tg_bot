@@ -150,10 +150,14 @@ def get_chat_ids(deta_base: Deta = deta_base):
     return [x['key'] for x in result]
 
 async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_ids = get_chat_ids(deta_base=deta_base)
+    if os.path.isfile('chat_ids.py'):
+        from chat_ids import chat_ids
+    else:
+        chat_ids = get_chat_ids(deta_base=deta_base)
     if len(chat_ids) > 0:
         for chat in chat_ids:
             await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
+    await context.bot.send_message(chat_id = 330959414, text = f'Message sent to {len(chat_ids)} chats')
 
 async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat.id
@@ -176,6 +180,7 @@ async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'Update {update} caused error {context.error}\n')
 
 def main():
+    # build the app
     app = Application.builder().token(TG_KEY).build()
 
     # Register command handlers

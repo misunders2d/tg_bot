@@ -3,6 +3,7 @@ from typing import List
 from openai import OpenAI
 from io import BytesIO
 from deta import Deta
+from main import BOT_HANDLE
 
 def check_thread(chat_id: str, deta_base: Deta):
     result = deta_base.Base('chat_ids').fetch({"key":chat_id}).items
@@ -35,10 +36,13 @@ def process_text(
             )
         current_status = 'queued'
         while current_status in ('queued','in_progress'):
-            time.sleep(0.5)
+            time.sleep(1.5)
             current_run = client.beta.threads.runs.retrieve(thread_id = thread_id, run_id = current_run.id)
             current_status = current_run.status
-            # print(current_status) # TODO remove
+            if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+                print(current_status) # for test bot
+        if current_status == 'expired':
+            return "Timeout on OpenAI side, please try again"
         thread_messages = client.beta.threads.messages.list(thread_id)
         response = thread_messages.data[0].content[0].text.value
     except Exception as e:
