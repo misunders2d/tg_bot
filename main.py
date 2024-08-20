@@ -19,6 +19,7 @@ OPENAI_KEY: Final = os.getenv('AI_KEY')
 TG_KEY: Final = os.getenv('TG_KEY')
 BOT_HANDLE = os.getenv('BOT_HANDLE')
 DETA_ID: Final = os.getenv('DETA_KEY')
+ADMIN_CHAT: int = os.getenv('ADMIN_CHAT')
 
 client = OpenAI(api_key = OPENAI_KEY)
 
@@ -28,24 +29,35 @@ current_sessions = {}
 
 # Command to provide help information
 async def assist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Here comes the help', parse_mode='Markdown')
+    reply_text = '''Here's what I can do:
+    - Send me a text message and I'll reply in text.
+    - Send me a voice message and I will reply with voice
+    - Send me a picture (not a file) and I will describe the picture to the best of my knowledge. You can ask questions about that picture, too
+    - Type "/voice_change" (without brackets) to change my voice in voice messages'''
+    await update.message.reply_text(reply_text)
 
 def retrieve_thread(chat_id: str) -> Thread:
     """function to retrieve tg chat's message thread from openai or create a new one if the chat is new to the bot"""
-    if not (current_thread:= current_sessions.get(chat_id)):
-        if not (chat_thread_id:=modules.check_thread(chat_id, deta_base)):
+    if not (current_thread:= current_sessions.get(chat_id,{}).get('thread')):
+        if not (chat_thread_id:=modules.check_thread(chat_id, deta_base)[0]):
             chat_thread = client.beta.threads.create()
             chat_thread_id = chat_thread.id
-            modules.push_thread(chat_id, chat_thread_id, deta_base)
+            modules.push_to_deta(chat_id, chat_thread_id, deta_base)
         current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id)
-        current_sessions.update({chat_id:current_thread})
+        current_sessions.update(
+            {chat_id:{
+                'thread':current_thread,
+                'voice':modules.check_thread(chat_id, deta_base)[1]
+                }
+            }
+            )
     return current_thread
 
 async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal['typing','recording'] = 'typing'):
     """Function to send 'typing...' action."""
     await context.bot.send_chat_action(chat_id, action=type, )
 
-def generate_response(user_input: str, current_thread: Thread, voice: bool = False) -> str:
+def generate_response(user_input: str, current_thread: Thread, voice_bool: bool = False, current_voice:str = 'onyx') -> str:
     normalized_input: str = user_input.lower()
 
     return modules.process_text(
@@ -53,7 +65,8 @@ def generate_response(user_input: str, current_thread: Thread, voice: bool = Fal
         client = client,
         assistant_id=ASSISTANT_ID,
         thread_id = current_thread.id,
-        voice = voice
+        voice_bool = voice_bool,
+        voice = current_voice
     )
 
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -61,7 +74,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id: str = str(update.message.chat.id)
     if not (text:= update.message.caption):
         text = 'What is in these images?'
-    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
         current_thread = retrieve_thread(chat_id)
         await send_action(chat_id, context, type = 'typing')
         media_file = update.message.photo[-1]
@@ -71,34 +84,37 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             media_url.file_path, caption, client,
             assistant_id = ASSISTANT_ID,
             thread_id=current_thread.id,
-            voice = False)
+            voice_bool = False)
         await update.message.reply_text(image_info, parse_mode='Markdown')
 
-async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, current_voice: str = 'onyx'):
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
+    if not (current_voice:= current_sessions.get(str(chat_id),{}).get('voice')):
+        pass
     if not (text:= update.message.caption):
         text = ''
-    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
-        voice = await context.bot.getFile(update.message.voice.file_id)
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
+        voice_content = await context.bot.getFile(update.message.voice.file_id)
         await send_action(chat_id, context, type = 'record_audio')
-        voice_file = requests.get(voice.file_path)
+        voice_file = requests.get(voice_content.file_path)
         voice_bytes = BytesIO(voice_file.content)
         voice_bytes.name = 'voice.ogg'
         voice_bytes.seek(0)
         text_version = modules.transcribe_audio(voice_bytes, client = client)
         current_thread = retrieve_thread(chat_id)
-        bot_response = generate_response(text_version, current_thread, voice = True)
+        bot_response = generate_response(text_version, current_thread, voice_bool = True, current_voice = current_voice)
         await update.message.reply_voice(voice = bot_response)
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
+    # print(chat_type) #TODO remove
     chat_id: str = str(update.message.chat.id)
     if not (text:= update.message.text):
         text = 'What is in these images?'
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
-    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
         await send_action(chat_id, context, type = 'typing')
         cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
         response: str = generate_response(cleaned_text, current_thread)
@@ -111,7 +127,7 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
     if not (text:= update.message.text):
         text = 'What is in these images?'
-    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
         await context.bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
         prompt = text.replace('/create ','')
         try:
@@ -135,12 +151,29 @@ def get_chat_ids(deta_base: Deta = deta_base):
 
 async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_ids = get_chat_ids(deta_base=deta_base)
-    for chat in chat_ids:
-        await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
+    if len(chat_ids) > 0:
+        for chat in chat_ids:
+            await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
+
+async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat.id
+    if (current_voice:= current_sessions.get(str(chat_id),{}).get('voice')):
+        await update.message.reply_text(f'Your current voice is {current_voice}')
+    voices = ('alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer')
+    voices_str = ', '.join(voices)
+    current_thread = retrieve_thread(str(chat_id))
+    text = update.message.text.strip().lower()
+    voice = text.replace('/voice_change','').strip()
+    if voice in voices:
+        modules.push_to_deta(chat_id = str(chat_id), thread_id = current_thread.id, deta_base=deta_base, voice = voice)
+        await update.message.reply_text(f'Changed the voice of the assistant to "{voice}"')
+    else:
+        await update.message.reply_text(f'Please send me a "/voice_change" command followed by one of the voices: {voices_str}')
 
 # Log errors
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused error {context.error}\n')
+    await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'Update {update} caused error {context.error}\n')
 
 def main():
     app = Application.builder().token(TG_KEY).build()
@@ -149,6 +182,7 @@ def main():
     app.add_handler(CommandHandler('help', assist_command))
     app.add_handler(CommandHandler('create', create))
     app.add_handler(CommandHandler('push', push))
+    app.add_handler(CommandHandler('voice_change', voice_change))
 
     # Register message handler
     app.add_handler(MessageHandler(filters.TEXT, process_message))
@@ -160,7 +194,7 @@ def main():
     # Register error handler
     app.add_error_handler(log_error)
 
-    print('Starting polling...')
+    print('Started polling...')
     # Run the bot
     app.run_polling(poll_interval=2)
 
