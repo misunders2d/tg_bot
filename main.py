@@ -43,7 +43,7 @@ def retrieve_thread(chat_id):
 
 async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal['typing','recording'] = 'typing'):
     """Function to send 'typing...' action."""
-    await context.bot.send_chat_action(chat_id, action=type)
+    await context.bot.send_chat_action(chat_id, action=type, )
 
 def generate_response(user_input: str, current_thread: str, voice: bool = False) -> str:
     normalized_input: str = user_input.lower()
@@ -59,7 +59,8 @@ def generate_response(user_input: str, current_thread: str, voice: bool = False)
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
-    text: str = update.message.caption
+    if not (text:= update.message.caption):
+        text = ''
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type not in ('supergroup','group'):
         current_thread = retrieve_thread(chat_id)
         await send_action(chat_id, context, type = 'typing')
@@ -142,7 +143,7 @@ async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Log errors
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f'Update {update} caused error {context.error}')
+    print(f'Update {update} caused error {context.error}\n')
 
 def main():
     app = Application.builder().token(TG_KEY).build()
