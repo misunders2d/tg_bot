@@ -192,6 +192,7 @@ async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
     voice = text.replace('/voice_change','').strip()
     if voice in voices:
         modules.push_to_deta(chat_id = str(chat_id), thread_id = current_thread.id, deta_base=deta_base, voice = voice)
+        current_sessions[str(chat_id)]['voice'] = voice
         await update.message.reply_text(f'Changed the voice of the assistant to "{voice}"')
     else:
         await update.message.reply_text(f'Please send me a "/voice_change" command followed by one of the voices: {voices_str}')
