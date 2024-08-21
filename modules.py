@@ -34,7 +34,7 @@ async def process_text(
         current_run = client.beta.threads.runs.create(
             thread_id=thread_id,
             assistant_id=assistant_id,
-            additional_instructions='You reply in the shortest, most concise manner, unless instructed otherwise.'
+            additional_instructions='You reply in the shortest, most concise manner, unless instructed otherwise.',
             )
         current_status = 'queued'
         while current_status in ('queued','in_progress'):

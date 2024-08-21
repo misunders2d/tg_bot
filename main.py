@@ -62,6 +62,9 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by a photo in the message. The photo is processed
         using vision capabilities of OpenAI
     """
+    if not update.message:
+        return
+
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
@@ -80,7 +83,13 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             voice_bool = False)
         await send_action(chat_id, context, type = 'typing')
         image_info = await image_info_task
-        await update.message.reply_text(image_info, parse_mode='Markdown')
+        try:
+            await update.message.reply_text(image_info, parse_mode='MarkdownV2')
+        except:
+            try:
+                await update.message.reply_text(image_info, parse_mode='Markdown')
+            except:
+                await update.message.reply_text(image_info)
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, current_voice: str = 'onyx'):
     """Separate function to process voice conversations"""
@@ -113,8 +122,6 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Main text processing function, that prepares data for the "process_text" function"""
-    if not update.message:
-        return
     
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
@@ -135,7 +142,13 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Reply to the user
         await send_action(chat_id, context, type = 'typing')
         response = await response_task
-        await update.message.reply_text(response, parse_mode='Markdown')
+        try:
+            await update.message.reply_text(response, parse_mode='MarkdownV2')
+        except:
+            try:
+                await update.message.reply_text(response, parse_mode='Markdown')
+            except:
+                await update.message.reply_text(response)
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by "/create" command and passes prompt to OpenAI to generate image
