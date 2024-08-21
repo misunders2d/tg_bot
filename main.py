@@ -120,14 +120,47 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
         response, text_response = await response_task
         await update.message.reply_voice(voice = response, caption = text_response)
 
+async def process_replied_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_type: str = update.message.chat.type
+    chat_id: str = str(update.message.chat.id)
+    try:
+        reply_text = update.message.reply_to_message.text
+    except:
+        reply_text = ''
+    if not reply_text:
+        reply_text = ''
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print('processing reply message')
+        print(chat_type, chat_id, reply_text) # for test bot
+    return reply_text
+
+async def process_forwarded_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_type: str = update.message.chat.type
+    chat_id: str = str(update.message.chat.id)
+    try:
+        forwarded_text = update.message.text
+    except:
+        forwarded_text = ''
+    if not forwarded_text:
+        forwarded_text = ''
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print('processing forwarded message')
+        print(chat_type, chat_id, forwarded_text) # for test bot
+    return forwarded_text
+
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Main text processing function, that prepares data for the "process_text" function"""
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
-    if not (text:= update.message.text):
+    try:
+        text = update.message.text
+    except:
         text = 'What is in these images?'
+    forwarded_text = await process_forwarded_message(update, context)
+    reply_text = await process_replied_message(update, context)
+    text = text + reply_text + forwarded_text
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
