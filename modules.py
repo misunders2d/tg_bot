@@ -1,5 +1,5 @@
 import time
-from typing import List
+from typing import List, Union
 from openai import OpenAI
 from io import BytesIO
 from deta import Deta
@@ -14,14 +14,15 @@ def check_thread(chat_id: str, deta_base: Deta):
 def push_to_deta(chat_id: str, thread_id: str, deta_base: Deta, voice = 'onyx'):
     deta_base.Base('chat_ids').put(key = chat_id, data = {'thread':thread_id, 'voice':voice})
 
-def process_text(
+async def process_text(
         text_input: str,
         client: OpenAI,
         assistant_id: str,
         thread_id: str,
         voice_bool: bool = False,
         voice = 'onyx',
-        messages: List[dict] = None):
+        messages: List[dict] = None
+        ) -> Union[str, tuple[bytes,str]]:
     if not messages:
         messages = [{'type':'text','text':text_input}]
     try:
@@ -54,13 +55,13 @@ def process_text(
         voice_response = client.audio.speech.create(
         model="tts-1",
         voice=voice,
-        input=response
+        input=response,
         )
         voice_response = BytesIO(voice_response.content)
         voice_response.name = 'response.ogg'
-    return voice_response
+    return (voice_response,response)
 
-def image(image: str, caption: str, client: OpenAI, assistant_id: str, thread_id: str, voice_bool: bool = False):
+async def image(image: str, caption: str, client: OpenAI, assistant_id: str, thread_id: str, voice_bool: bool = False):
     if not caption:
         caption = 'What is in these images?'
     messages = [
@@ -68,7 +69,7 @@ def image(image: str, caption: str, client: OpenAI, assistant_id: str, thread_id
         {'type':'image_url', 'image_url':{'url':image}}
         ]
     try:
-        response = process_text(
+        response = await process_text(
             text_input = None,
             client = client,
             assistant_id = assistant_id,

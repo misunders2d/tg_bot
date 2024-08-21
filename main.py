@@ -4,7 +4,7 @@ load_dotenv('.env')
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-import os, requests, asyncio
+import os, requests
 from io import BytesIO
 from typing import Final, Literal
 
@@ -58,74 +58,80 @@ async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal[
     """Function to send 'typing...' action."""
     await context.bot.send_chat_action(chat_id, action=type, )
 
-def generate_response(user_input: str, current_thread: Thread, voice_bool: bool = False, current_voice:str = 'onyx') -> str:
-    """Helper function that uses the "modules.process text" function to actually pass texts to OpenAI and retrieve completions"""
-    normalized_input: str = user_input.lower()
-
-    return modules.process_text(
-        text_input = normalized_input, 
-        client = client,
-        assistant_id=ASSISTANT_ID,
-        thread_id = current_thread.id,
-        voice_bool = voice_bool,
-        voice = current_voice
-    )
-
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by a photo in the message. The photo is processed
         using vision capabilities of OpenAI
     """
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print(chat_type, chat_id) # for test bot
     if not (text:= update.message.caption):
         text = 'What is in these images?'
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
         current_thread = retrieve_thread(chat_id)
-        await send_action(chat_id, context, type = 'typing')
         media_file = update.message.photo[-1]
         caption = update.message.caption
         media_url = await context.bot.getFile(media_file.file_id)
-        image_info = modules.image(
+        image_info_task = modules.image(
             media_url.file_path, caption, client,
             assistant_id = ASSISTANT_ID,
             thread_id=current_thread.id,
             voice_bool = False)
+        await send_action(chat_id, context, type = 'typing')
+        image_info = await image_info_task
         await update.message.reply_text(image_info, parse_mode='Markdown')
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, current_voice: str = 'onyx'):
     """Separate function to process voice conversations"""
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print(chat_type, chat_id) # for test bot
     if not (current_voice:= current_sessions.get(str(chat_id),{}).get('voice')):
-        pass
+        current_voice = 'onyx'
     if not (text:= update.message.caption):
         text = ''
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
         voice_content = await context.bot.getFile(update.message.voice.file_id)
-        await send_action(chat_id, context, type = 'record_audio')
         voice_file = requests.get(voice_content.file_path)
         voice_bytes = BytesIO(voice_file.content)
         voice_bytes.name = 'voice.ogg'
         voice_bytes.seek(0)
         text_version = modules.transcribe_audio(voice_bytes, client = client)
         current_thread = retrieve_thread(chat_id)
-        bot_response = generate_response(text_version, current_thread, voice_bool = True, current_voice = current_voice)
-        await update.message.reply_voice(voice = bot_response)
+        response_task: str = modules.process_text(
+            text_input=text_version,
+            client = client,
+            assistant_id=ASSISTANT_ID,
+            thread_id=current_thread.id,
+            voice_bool = True,
+            voice = current_voice)
+        await send_action(chat_id, context, type = 'record_audio')
+        response, text_response = await response_task
+        await update.message.reply_voice(voice = response, caption = text_response)
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Main text processing function, that prepares data for the "generate_response" function"""
+    """Main text processing function, that prepares data for the "process_text" function"""
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print(chat_type, chat_id) # for test bot
     if not (text:= update.message.text):
         text = 'What is in these images?'
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
-        await send_action(chat_id, context, type = 'typing')
         cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
-        response: str = generate_response(cleaned_text, current_thread)
-
+        response_task: str = modules.process_text(
+            text_input=cleaned_text,
+            client = client,
+            assistant_id=ASSISTANT_ID,
+            thread_id=current_thread.id,
+        )
         # Reply to the user
+        await send_action(chat_id, context, type = 'typing')
+        response = await response_task
         await update.message.reply_text(response, parse_mode='Markdown')
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -134,11 +140,14 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     chat_id = update.message.chat.id
     chat_type: str = update.message.chat.type
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print(chat_type, chat_id) # for test bot
+
     if not (text:= update.message.text):
         text = 'What is in these images?'
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
         await context.bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
-        prompt = text.replace('/create ','')
+        prompt = text.replace('/create ','').replace(BOT_HANDLE,'')
         try:
             #DALL-E generation:
             response = client.images.generate(
