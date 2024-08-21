@@ -198,8 +198,9 @@ async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Logging function. Also sends logs to ADMIN_CHAT in Telegram"""
-    print(f'Update {update} caused error {context.error}\n')
-    await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'Update {update} caused error {context.error}\n')
+    log_text = f'Update {update} caused error {context.error}\nChat ID = {update.message.chat}, text = {update.message.text}, chat type = {update.message.chat.type}'
+    print(log_text)
+    await context.bot.send_message(chat_id = ADMIN_CHAT, text = log_text)
 
 def main():
     # build the app
