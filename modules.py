@@ -22,7 +22,10 @@ async def delete_img_messages(client: OpenAI, thread_id:str):
     for img_message_id in img_message_ids:
         if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
             print(f'Deleting message {img_message_id}') # for test bot
-        client.beta.threads.messages.delete(message_id = img_message_id, thread_id=thread_id)
+        try:
+            client.beta.threads.messages.delete(message_id = img_message_id, thread_id=thread_id)
+        except:
+            pass
 
 async def process_text(
         text_input: str,
@@ -33,6 +36,7 @@ async def process_text(
         voice = 'onyx',
         messages: List[dict] = None
         ) -> Union[str, tuple[bytes,str]]:
+    msg_created = None
     if not messages:
         messages = [{'type':'text','text':text_input}]
     try:
@@ -66,7 +70,6 @@ async def process_text(
             thread_messages = client.beta.threads.messages.list(thread_id)
             response = thread_messages.data[0].content[0].text.value
     except Exception as e:
-        msg_created = None
         print(e)
         response = 'Sorry, something went wrong on OpenAI side'
     finally:
@@ -74,7 +77,10 @@ async def process_text(
             if isinstance(msg_created.content[1], ImageURLContentBlock):
                 if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
                     print(f'Deleting message {msg_created.id}') # for test bot
-                client.beta.threads.messages.delete(message_id=msg_created.id, thread_id=thread_id)
+                try:
+                    client.beta.threads.messages.delete(message_id=msg_created.id, thread_id=thread_id)
+                except:
+                    pass
     if not voice_bool:
         return response
     else:
