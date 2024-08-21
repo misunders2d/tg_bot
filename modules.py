@@ -14,6 +14,15 @@ def check_thread(chat_id: str, deta_base: Deta):
 def push_to_deta(chat_id: str, thread_id: str, deta_base: Deta, voice = 'onyx'):
     deta_base.Base('chat_ids').put(key = chat_id, data = {'thread':thread_id, 'voice':voice})
 
+async def delete_img_messages(client: OpenAI, thread_id:str):
+    all_messages = client.beta.threads.messages.list(thread_id = thread_id)
+    img_messages = [x for x in all_messages if len(x.content) > 1]
+    img_message_ids = [x.id for x in img_messages]
+    for img_message_id in img_message_ids:
+        if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+            print(f'Deleting message {img_message_id}') # for test bot
+        client.beta.threads.messages.delete(message_id = img_message_id, thread_id=thread_id)
+
 async def process_text(
         text_input: str,
         client: OpenAI,
@@ -46,9 +55,15 @@ async def process_text(
         if current_status == 'expired':
             return "Timeout on OpenAI side, please try again"
         elif current_status == 'failed':
-            return f'Sorry, error occurred: {current_run.last_error}'
-        thread_messages = client.beta.threads.messages.list(thread_id)
-        response = thread_messages.data[0].content[0].text.value
+            if current_run.last_error.code == 'invalid_image':
+                del_task = delete_img_messages(client, thread_id)
+                response = 'Sorry, need to clean up old TG images from my queue, their links are expired.\nPlease try in a few seconds.'
+                await del_task
+            else:
+                return f'Sorry, error occurred: {current_run.last_error}. Please try again.'
+        elif current_status == 'completed':
+            thread_messages = client.beta.threads.messages.list(thread_id)
+            response = thread_messages.data[0].content[0].text.value
     except Exception as e:
         print(e)
         response = 'Sorry, something went wrong on OpenAI side'
