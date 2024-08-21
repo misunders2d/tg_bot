@@ -1,6 +1,7 @@
 import time
 from typing import List, Union
 from openai import OpenAI
+from openai.types.beta.threads.image_url_content_block import ImageURLContentBlock
 from io import BytesIO
 from deta import Deta
 from main import BOT_HANDLE
@@ -15,9 +16,9 @@ def push_to_deta(chat_id: str, thread_id: str, deta_base: Deta, voice = 'onyx'):
     deta_base.Base('chat_ids').put(key = chat_id, data = {'thread':thread_id, 'voice':voice})
 
 async def delete_img_messages(client: OpenAI, thread_id:str):
-    all_messages = client.beta.threads.messages.list(thread_id = thread_id)
+    all_messages = client.beta.threads.messages.list(thread_id = thread_id, limit = 100)
     img_messages = [x for x in all_messages if len(x.content) > 1]
-    img_message_ids = [x.id for x in img_messages]
+    img_message_ids = [x.id for x in img_messages if isinstance(x.content[1], ImageURLContentBlock)]
     for img_message_id in img_message_ids:
         if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
             print(f'Deleting message {img_message_id}') # for test bot
@@ -35,7 +36,7 @@ async def process_text(
     if not messages:
         messages = [{'type':'text','text':text_input}]
     try:
-        _ = client.beta.threads.messages.create(
+        msg_created = client.beta.threads.messages.create(
             thread_id = thread_id,
             content = messages,
             role = 'user'
@@ -67,6 +68,12 @@ async def process_text(
     except Exception as e:
         print(e)
         response = 'Sorry, something went wrong on OpenAI side'
+    finally:
+        if msg_created and len(msg_created.content)>1:
+            if isinstance(msg_created.content[1], ImageURLContentBlock):
+                if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+                    print(f'Deleting message {msg_created.id}') # for test bot
+                client.beta.threads.messages.delete(message_id=msg_created.id, thread_id=thread_id)
     if not voice_bool:
         return response
     else:

@@ -122,7 +122,6 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Main text processing function, that prepares data for the "process_text" function"""
-    
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
@@ -132,6 +131,10 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
     if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
+        if update.message.photo:
+            await describe_photo(update, context)
+            return
+
         cleaned_text: str = text.replace(BOT_HANDLE, '').strip()
         response_task: str = modules.process_text(
             text_input=cleaned_text,
