@@ -214,7 +214,7 @@ def main():
     app.add_handler(CommandHandler('voice_change', voice_change))
 
     # Register message handler
-    app.add_handler(MessageHandler(filters.TEXT, process_message))
+    app.add_handler(MessageHandler((filters.TEXT | filters.FORWARDED | filters.REPLY), process_message))
     app.add_handler(MessageHandler(filters.PHOTO, describe_photo))
     app.add_handler(MessageHandler(filters.VOICE, accept_voice))
 
