@@ -45,6 +45,8 @@ async def process_text(
                 print(current_status) # for test bot
         if current_status == 'expired':
             return "Timeout on OpenAI side, please try again"
+        elif current_status == 'failed':
+            return f'Sorry, error occurred: {current_run.last_error}'
         thread_messages = client.beta.threads.messages.list(thread_id)
         response = thread_messages.data[0].content[0].text.value
     except Exception as e:
