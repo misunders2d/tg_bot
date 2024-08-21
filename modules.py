@@ -66,6 +66,7 @@ async def process_text(
             thread_messages = client.beta.threads.messages.list(thread_id)
             response = thread_messages.data[0].content[0].text.value
     except Exception as e:
+        msg_created = None
         print(e)
         response = 'Sorry, something went wrong on OpenAI side'
     finally:
