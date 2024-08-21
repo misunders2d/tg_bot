@@ -113,6 +113,9 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Main text processing function, that prepares data for the "process_text" function"""
+    if not update.message:
+        return
+    
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
