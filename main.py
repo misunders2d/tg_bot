@@ -29,11 +29,12 @@ current_sessions = {}
 
 # Command to provide help information
 async def assist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_text = '''Here's what I can do:
-    - Send me a text message and I'll reply in text.
-    - Send me a voice message and I will reply with voice
-    - Send me a picture (not a file) and I will describe the picture to the best of my knowledge. You can ask questions about that picture, too
-    - Type "/voice_change" (without brackets) to change my voice in voice messages'''
+    """Help function that shows available commands to the user"""
+    if os.path.isfile('help.txt'):
+        with open('help.txt', 'r') as file:
+            reply_text = file.read()
+    else:
+        reply_text = "Sorry, no help yet"
     await update.message.reply_text(reply_text)
 
 def retrieve_thread(chat_id: str) -> Thread:
@@ -58,6 +59,7 @@ async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal[
     await context.bot.send_chat_action(chat_id, action=type, )
 
 def generate_response(user_input: str, current_thread: Thread, voice_bool: bool = False, current_voice:str = 'onyx') -> str:
+    """Helper function that uses the "modules.process text" function to actually pass texts to OpenAI and retrieve completions"""
     normalized_input: str = user_input.lower()
 
     return modules.process_text(
@@ -70,6 +72,9 @@ def generate_response(user_input: str, current_thread: Thread, voice_bool: bool 
     )
 
 async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Separate function that is triggered by a photo in the message. The photo is processed
+        using vision capabilities of OpenAI
+    """
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     if not (text:= update.message.caption):
@@ -88,6 +93,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(image_info, parse_mode='Markdown')
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, current_voice: str = 'onyx'):
+    """Separate function to process voice conversations"""
     chat_type: str = update.message.chat.type
     chat_id: str = str(update.message.chat.id)
     if not (current_voice:= current_sessions.get(str(chat_id),{}).get('voice')):
@@ -107,8 +113,8 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
         await update.message.reply_voice(voice = bot_response)
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Main text processing function, that prepares data for the "generate_response" function"""
     chat_type: str = update.message.chat.type
-    # print(chat_type) #TODO remove
     chat_id: str = str(update.message.chat.id)
     if not (text:= update.message.text):
         text = 'What is in these images?'
@@ -123,6 +129,9 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(response, parse_mode='Markdown')
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Separate function that is triggered by "/create" command and passes prompt to OpenAI to generate image
+        using "modules.image" function
+    """
     chat_id = update.message.chat.id
     chat_type: str = update.message.chat.type
     if not (text:= update.message.text):
@@ -146,20 +155,24 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=chat_id,text =f"Oops, this didn't work out, here's the error message\n{e}")
         
 def get_chat_ids(deta_base: Deta = deta_base):
+    """Pull existing chat IDs from Deta db"""
     result = deta_base.Base('chat_ids').fetch().items
     return [x['key'] for x in result]
 
 async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if os.path.isfile('chat_ids.py'):
-        from chat_ids import chat_ids
-    else:
-        chat_ids = get_chat_ids(deta_base=deta_base)
-    if len(chat_ids) > 0:
-        for chat in chat_ids:
-            await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
-    await context.bot.send_message(chat_id = 330959414, text = f'Message sent to {len(chat_ids)} chats')
+    """Admin function used to push messages (updates and warnings) to all chats"""
+    if update.message.chat.id == ADMIN_CHAT:
+        if os.path.isfile('chat_ids.py'):
+            from chat_ids import chat_ids
+        else:
+            chat_ids = get_chat_ids(deta_base=deta_base)
+        if len(chat_ids) > 0:
+            for chat in chat_ids:
+                await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
+        await context.bot.send_message(chat_id = 330959414, text = f'Message sent to {len(chat_ids)} chats')
 
 async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Helper function that allows to change voice of the assistant for each user separately"""
     chat_id = update.message.chat.id
     if (current_voice:= current_sessions.get(str(chat_id),{}).get('voice')):
         await update.message.reply_text(f'Your current voice is {current_voice}')
@@ -174,8 +187,8 @@ async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(f'Please send me a "/voice_change" command followed by one of the voices: {voices_str}')
 
-# Log errors
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Logging function. Also sends logs to ADMIN_CHAT in Telegram"""
     print(f'Update {update} caused error {context.error}\n')
     await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'Update {update} caused error {context.error}\n')
 
@@ -191,9 +204,7 @@ def main():
 
     # Register message handler
     app.add_handler(MessageHandler(filters.TEXT, process_message))
-
     app.add_handler(MessageHandler(filters.PHOTO, describe_photo))
-
     app.add_handler(MessageHandler(filters.VOICE, accept_voice))
 
     # Register error handler
