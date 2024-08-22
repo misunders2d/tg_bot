@@ -152,8 +152,9 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
         await update.message.reply_voice(voice = response, caption = text_response)
 
 async def process_replied_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_type: str = update.message.chat.type
-    chat_id: str = str(update.message.chat.id)
+    if update.message and update.message.text and update.message.chat:
+        chat_type: str = update.message.chat.type
+        chat_id: str = str(update.message.chat.id)
     try:
         reply_text = update.message.reply_to_message.text
         re_from = update.message.reply_to_message.from_user.username
@@ -169,12 +170,13 @@ async def process_replied_message(update: Update, context: ContextTypes.DEFAULT_
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Main text processing function, that prepares data for the "process_text" function"""
-    try:
-        chat_type: str = update.message.chat.type
-        chat_id: str = str(update.message.chat.id)
-    except AttributeError as e:
-        await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
-        return
+    if update.message and update.message.text and update.message.chat:
+        try:
+            chat_type: str = update.message.chat.type
+            chat_id: str = str(update.message.chat.id)
+        except AttributeError as e:
+            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
+            return
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
     try:
