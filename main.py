@@ -9,7 +9,7 @@ from io import BytesIO
 from typing import Final, Literal
 
 from deta import Deta
-from openai import OpenAI
+from openai import OpenAI, NotFoundError
 from openai.types.beta.thread import Thread
 
 import modules
@@ -21,34 +21,52 @@ BOT_HANDLE = os.getenv('BOT_HANDLE')
 DETA_ID: Final = os.getenv('DETA_KEY')
 ADMIN_CHAT: int = os.getenv('ADMIN_CHAT')
 
-client = OpenAI(api_key = OPENAI_KEY)
+client: OpenAI = OpenAI(api_key = OPENAI_KEY)
 
-deta_base = Deta(DETA_ID)
+deta_base: Deta = Deta(DETA_ID)
 
-current_sessions = {}
+current_sessions: dict = {}
 
 # Command to provide help information
 async def assist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Help function that shows available commands to the user"""
     if os.path.isfile('help.txt'):
         with open('help.txt', 'r') as file:
-            reply_text = file.read()
+            reply_text: str = file.read()
     else:
-        reply_text = "Sorry, no help yet"
+        reply_text: str = "Sorry, no help yet"
     await update.message.reply_text(reply_text)
 
 def retrieve_thread(chat_id: str) -> Thread:
-    """function to retrieve tg chat's message thread from openai or create a new one if the chat is new to the bot"""
+    """
+    function to retrieve tg chat's message thread from openai or create a new one if the chat is new to the bot
+    Creates a thread if it didn't exist before or got expired
+    """
+    def create_thread():
+        chat_thread: Thread = client.beta.threads.create()
+        chat_thread_id: str = chat_thread.id
+        return chat_thread_id
+    
     if not (current_thread:= current_sessions.get(chat_id,{}).get('thread')):
+        # thread not found in local "current_sessions dict", check in deta db:
+
         if not (chat_thread_id:=modules.check_thread(chat_id, deta_base)[0]):
-            chat_thread = client.beta.threads.create()
-            chat_thread_id = chat_thread.id
+            # thread not found in remote deta db either, create one
+            chat_thread_id = create_thread(chat_id)
             modules.push_to_deta(chat_id, chat_thread_id, deta_base)
-        current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id)
+        # otherwise pull current thread and voice values from remote db
+        voice = modules.check_thread(chat_id, deta_base)[1]
+        try:
+            current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id) # check if the stored thread still exists in OpenAI
+        except NotFoundError:
+            new_thread_id = create_thread() # create a new thread in OpenAI
+            modules.push_to_deta(chat_id, new_thread_id, deta_base, voice = voice) # replace old thread id in remote db with newly created one
+            current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id) # retrieve new thread from OpenAI
+        #update local current_sessions dict with new thread and voice values
         current_sessions.update(
             {chat_id:{
                 'thread':current_thread,
-                'voice':modules.check_thread(chat_id, deta_base)[1]
+                'voice':voice
                 }
             }
             )
