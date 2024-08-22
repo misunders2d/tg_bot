@@ -236,7 +236,7 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_chat_ids(deta_base: Deta = deta_base):
     """Pull existing chat IDs from Deta db"""
     result = deta_base.Base('chat_ids').fetch().items
-    return [x['key'] for x in result]
+    return [int(x['key']) for x in result]
 
 async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin function used to push messages (updates and warnings) to all chats"""
@@ -274,7 +274,6 @@ async def delete_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f'Thread {current_thread.id} does not exist, skipping')
     except Exception as e:
         await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'Error while deleting thread {current_thread.id}:\n{e}')
-
 
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Logging function. Also sends logs to ADMIN_CHAT in Telegram"""
