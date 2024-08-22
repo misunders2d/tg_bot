@@ -19,7 +19,7 @@ OPENAI_KEY: Final = os.getenv('AI_KEY')
 TG_KEY: Final = os.getenv('TG_KEY')
 BOT_HANDLE = os.getenv('BOT_HANDLE')
 DETA_ID: Final = os.getenv('DETA_KEY')
-ADMIN_CHAT: int = os.getenv('ADMIN_CHAT')
+ADMIN_CHAT: int = int(os.getenv('ADMIN_CHAT'))
 
 client: OpenAI = OpenAI(api_key = OPENAI_KEY)
 
