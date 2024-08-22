@@ -43,33 +43,46 @@ def retrieve_thread(chat_id: str) -> Thread:
     Creates a thread if it didn't exist before or got expired
     """
     def create_thread():
-        chat_thread: Thread = client.beta.threads.create()
-        chat_thread_id: str = chat_thread.id
-        return chat_thread_id
+        current_thread: Thread = client.beta.threads.create()
+        return current_thread
+    
+    # first, get voice value from local or remote db and assign a default value:
+    if not (voice:=current_sessions.get(chat_id,{}).get('voice')):
+        if not (voice:=modules.check_thread(chat_id, deta_base)[1]):
+            voice: str = 'onyx'
     
     if not (current_thread:= current_sessions.get(chat_id,{}).get('thread')):
         # thread not found in local "current_sessions dict", check in deta db:
 
         if not (chat_thread_id:=modules.check_thread(chat_id, deta_base)[0]):
-            # thread not found in remote deta db either, create one
-            chat_thread_id = create_thread(chat_id)
-            modules.push_to_deta(chat_id, chat_thread_id, deta_base)
-        # otherwise pull current thread and voice values from remote db
-        voice = modules.check_thread(chat_id, deta_base)[1]
+            # thread_id not found in remote deta db either, create one
+            current_thread: Thread = create_thread(chat_id)
+            modules.push_to_deta(chat_id, current_thread.id, deta_base, voice = voice)
+            chat_thread_id = current_thread.id
+        else:
+            try:
+                current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id) # check if the stored thread still exists in OpenAI
+            except NotFoundError:
+                new_thread = create_thread() # create a new thread in OpenAI
+                modules.push_to_deta(chat_id, new_thread.id, deta_base, voice = voice) # replace old thread id in remote db with newly created one
+                current_thread = client.beta.threads.retrieve(thread_id = new_thread.id) # retrieve new thread from OpenAI
+    else:
         try:
-            current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id) # check if the stored thread still exists in OpenAI
+            current_thread = client.beta.threads.retrieve(thread_id = current_thread.id) # check if the stored thread still exists in OpenAI
         except NotFoundError:
-            new_thread_id = create_thread() # create a new thread in OpenAI
-            modules.push_to_deta(chat_id, new_thread_id, deta_base, voice = voice) # replace old thread id in remote db with newly created one
-            current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id) # retrieve new thread from OpenAI
-        #update local current_sessions dict with new thread and voice values
-        current_sessions.update(
-            {chat_id:{
-                'thread':current_thread,
-                'voice':voice
-                }
+            new_thread = create_thread() # create a new thread in OpenAI
+            modules.push_to_deta(chat_id, new_thread.id, deta_base, voice = voice) # replace old thread id in remote db with newly created one
+            current_thread = client.beta.threads.retrieve(thread_id = new_thread.id) # retrieve new thread from OpenAI
+
+
+    #update local current_sessions dict with new thread and voice values
+    current_sessions.update(
+        {chat_id:{
+            'thread':current_thread,
+            'voice':voice
             }
-            )
+        }
+        )
     return current_thread
 
 async def send_action(chat_id, context: ContextTypes.DEFAULT_TYPE, type:Literal['typing','recording'] = 'typing'):
