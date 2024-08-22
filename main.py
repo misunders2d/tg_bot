@@ -156,28 +156,16 @@ async def process_replied_message(update: Update, context: ContextTypes.DEFAULT_
     chat_id: str = str(update.message.chat.id)
     try:
         reply_text = update.message.reply_to_message.text
+        re_from = update.message.reply_to_message.from_user.username
     except:
-        reply_text = ''
+        return ''
     if not reply_text:
-        reply_text = ''
+        return ''
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print('processing reply message')
-        print(chat_type, chat_id, reply_text) # for test bot
-    return reply_text
+        print(chat_type, chat_id, re_from, reply_text) # for test bot
 
-async def process_forwarded_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_type: str = update.message.chat.type
-    chat_id: str = str(update.message.chat.id)
-    try:
-        forwarded_text = update.message.text
-    except:
-        forwarded_text = ''
-    if not forwarded_text:
-        forwarded_text = ''
-    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
-        print('processing forwarded message')
-        print(chat_type, chat_id, forwarded_text) # for test bot
-    return forwarded_text
+    return f"""RE: from {re_from}\n{reply_text}\n\n"""
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Main text processing function, that prepares data for the "process_text" function"""
@@ -189,12 +177,11 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = update.message.text
     except:
         text = 'What is in these images?'
-    forwarded_text = await process_forwarded_message(update, context)
     reply_text = await process_replied_message(update, context)
-    text = text + reply_text + forwarded_text
+    text = reply_text + text
     current_thread = retrieve_thread(chat_id)
     # Handle group messages only if bot is mentioned
-    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private':
+    if (chat_type in ('supergroup','group') and BOT_HANDLE in text) or chat_type == 'private' or BOT_HANDLE.replace('@','') in reply_text:
         if update.message.photo:
             await describe_photo(update, context)
             return
@@ -297,7 +284,7 @@ def main():
     app.add_handler(CommandHandler('voice_change', voice_change))
 
     # Register message handler
-    app.add_handler(MessageHandler((filters.TEXT | filters.FORWARDED | filters.REPLY), process_message))
+    app.add_handler(MessageHandler((filters.TEXT | filters.REPLY), process_message))
     app.add_handler(MessageHandler(filters.PHOTO, describe_photo))
     app.add_handler(MessageHandler(filters.VOICE, accept_voice))
 
