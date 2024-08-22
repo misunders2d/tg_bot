@@ -57,7 +57,7 @@ def retrieve_thread(chat_id: str) -> Thread:
         if not (chat_thread_id:=modules.check_thread(chat_id, deta_base)[0]):
             # thread_id not found in remote deta db either, create one
             current_thread: Thread = create_thread(chat_id)
-            modules.push_to_deta(chat_id, current_thread.id, deta_base, voice = voice)
+            modules.push_to_deta(chat_id, current_thread.id, deta_base, voice = voice) #update thread id in remote db
             chat_thread_id = current_thread.id
         else:
             try:
