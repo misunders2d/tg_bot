@@ -241,14 +241,11 @@ def get_chat_ids(deta_base: Deta = deta_base):
 async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin function used to push messages (updates and warnings) to all chats"""
     if update.message.chat.id == ADMIN_CHAT:
-        if os.path.isfile('chat_ids.py'):
-            from chat_ids import chat_ids
-        else:
-            chat_ids = get_chat_ids(deta_base=deta_base)
+        chat_ids = get_chat_ids(deta_base=deta_base)
         if len(chat_ids) > 0:
             for chat in chat_ids:
                 await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
-        await context.bot.send_message(chat_id = 330959414, text = f'Message sent to {len(chat_ids)} chats')
+        await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'Message sent to {len(chat_ids)} chats')
 
 async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Helper function that allows to change voice of the assistant for each user separately"""
@@ -267,6 +264,18 @@ async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(f'Please send me a "/voice_change" command followed by one of the voices: {voices_str}')
 
+async def delete_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat.id
+    current_thread = retrieve_thread(str(chat_id))
+    try:
+        client.beta.threads.delete(thread_id = current_thread.id)
+        await update.message.reply_text(f'Thread {current_thread.id} successfully deleted. You can start a new conversation')
+    except NotFoundError:
+        await update.message.reply_text(f'Thread {current_thread.id} does not exist, skipping')
+    except Exception as e:
+        await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'Error while deleting thread {current_thread.id}:\n{e}')
+
+
 async def log_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Logging function. Also sends logs to ADMIN_CHAT in Telegram"""
     log_text = f'Update {update} caused error {context.error}\nChat ID = {update.message.chat}, text = {update.message.text}, chat type = {update.message.chat.type}'
@@ -281,6 +290,7 @@ def main():
     app.add_handler(CommandHandler('help', assist_command))
     app.add_handler(CommandHandler('create', create))
     app.add_handler(CommandHandler('push', push))
+    app.add_handler(CommandHandler('delete', delete_history))
     app.add_handler(CommandHandler('voice_change', voice_change))
 
     # Register message handler

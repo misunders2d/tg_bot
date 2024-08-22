@@ -6,4 +6,5 @@
     - Forward me some other message and tell me what you want me to do with it.
     - Type /voice_change to change my voice in voice messages.
     - Type /create followed by a prompt and I will try to create an image based on that prompt.
+    - Type /delete to completely remove the conversation history from OpenAI's servers
     - Type /help to get this help doc.
