@@ -174,6 +174,7 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id: str = str(update.message.chat.id)
     except AttributeError as e:
         await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
+        return
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
     try:
