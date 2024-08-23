@@ -5,6 +5,7 @@ from openai.types.beta.threads.image_url_content_block import ImageURLContentBlo
 from io import BytesIO
 from deta import Deta
 from main import BOT_HANDLE
+from func_calling import search_google, get_weather, call_tools
 
 def check_thread(chat_id: str, deta_base: Deta):
     result = deta_base.Base('chat_ids').fetch({"key":chat_id}).items
@@ -59,6 +60,15 @@ async def process_text(
                 print(current_status) # for test bot
         if current_status == 'expired':
             return "Timeout on OpenAI side, please try again"
+        elif current_status == 'requires_action':
+            tool_calls = current_run.required_action.submit_tool_outputs.tool_calls
+            tool_outputs = call_tools(tool_calls)
+            
+            func_run = client.beta.threads.runs.submit_tool_outputs(
+                thread_id=thread_id,
+                run_id=current_run.id,
+                tool_outputs=tool_outputs
+                )
         elif current_status == 'failed':
             if current_run.last_error.code == 'invalid_image':
                 del_task = delete_img_messages(client, thread_id)
