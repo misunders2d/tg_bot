@@ -58,9 +58,7 @@ async def process_text(
             current_status = current_run.status
             if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
                 print(current_status) # for test bot
-        if current_status == 'expired':
-            return "Timeout on OpenAI side, please try again"
-        elif current_status == 'requires_action':
+        if current_status == 'requires_action':
             tool_calls = current_run.required_action.submit_tool_outputs.tool_calls
             tool_outputs = call_tools(tool_calls)
             
@@ -69,6 +67,8 @@ async def process_text(
                 run_id=current_run.id,
                 tool_outputs=tool_outputs
                 )
+        elif current_status == 'expired':
+            return "Timeout on OpenAI side, please try again"
         elif current_status == 'failed':
             if current_run.last_error.code == 'invalid_image':
                 del_task = delete_img_messages(client, thread_id)

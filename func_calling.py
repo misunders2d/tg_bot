@@ -6,9 +6,8 @@ import requests, json, chardet
 from serpapi import GoogleSearch
 from openai import OpenAI
 
-SERP_API_KEY = os.environ('SERP_API')
-
-
+SERP_API_KEY = os.getenv('SERP_API')
+WEATHER_API_KEY = os.getenv('WEATHER_API')
 
 def call_tools(tool_calls):
     """ Process "tool_calls that come straight from openai's run.
