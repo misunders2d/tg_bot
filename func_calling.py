@@ -71,7 +71,7 @@ def search_google(search_query, language = 'en', num = 2, api_key = SERP_API_KEY
     return f"Here's the information from google search: {answer.strip()}"
     
 def get_weather(location = 'Киев', units = 'temp_c'):
-    """basic weather data for requested location"""
+    """Check basic weather data for requested location. Prompt the user for location if the details are unclear"""
     base_url = 'http://api.weatherapi.com/v1'
     
     # forecast_days = 3
