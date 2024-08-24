@@ -4,6 +4,8 @@
     - Send me a voice message and I will reply with voice.
     - Send me a picture (not a file) and I will describe the picture to the best of my knowledge. You can ask questions about that picture, too.
     - Forward me some other message and tell me what you want me to do with it.
+    - I can GOOGLE! Just ask me for any updated information.
+    - I can also check basic information about weather if you ask for it.
     - Type /voice_change to change my voice in voice messages.
     - Type /create followed by a prompt and I will try to create an image based on that prompt.
     - Type /delete to completely remove the conversation history from OpenAI's servers

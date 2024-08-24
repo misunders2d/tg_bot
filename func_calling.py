@@ -29,9 +29,21 @@ def call_tools(tool_calls):
     # print(tool_outputs)
     return tool_outputs
 
-def search_google(search_query = 'Happy day', language = 'en', num = 3):
-    search = GoogleSearch({'q':search_query, 'api_key':SERP_API_KEY, 'language':language, 'num':num})
+def search_google(search_query, language = 'en', num = 2, api_key = SERP_API_KEY):
+    """
+    basic Google search to provide top level results for any updated information that the bot has no access to
+    """
+    params = {
+        "api_key": api_key,
+        "engine": "google",
+        "num": num,
+        "q": search_query.get('search_query'),
+        "hl": language
+        }
+    print(params) # TODO remove
+    search = GoogleSearch(params)
     result = search.get_dict()
+    print('\n\n',result) # TODO remove
     try:
         answer = ''
         answer += result.get('answer_box',{}).get('result','\n')
@@ -55,10 +67,11 @@ def search_google(search_query = 'Happy day', language = 'en', num = 3):
     except Exception as e:
         print(f'error: {e}')
         answer = "There is not enough information to Google, provide more details"
-    print(f"Here's the informatino from google search: {answer.strip()}")
-    return f"Here's the informatino from google search: {answer.strip()}"
+    print(f"Here's the information from google search: {answer.strip()}")
+    return f"Here's the information from google search: {answer.strip()}"
     
 def get_weather(location = 'Киев', units = 'temp_c'):
+    """basic weather data for requested location"""
     base_url = 'http://api.weatherapi.com/v1'
     
     # forecast_days = 3
@@ -69,6 +82,7 @@ def get_weather(location = 'Киев', units = 'temp_c'):
     current_json = result.json()
     temp = current_json['current'][units]
     text = current_json['current']['condition']['text']
+    icon = current_json['current']['condition']['icon']
     # forecast = requests.get(forecast_weather)
     
     return f'Current temperature is {temp}, current condition is {text}'
