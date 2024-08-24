@@ -67,7 +67,7 @@ def search_google(search_query, language = 'en', num = 2, api_key = SERP_API_KEY
     except Exception as e:
         print(f'error: {e}')
         answer = "There is not enough information to Google, provide more details"
-    print(f"Here's the information from google search: {answer.strip()}")
+    # print(f"Here's the information from google search: {answer.strip()}")
     return f"Here's the information from google search: {answer.strip()}"
     
 def get_weather(location = 'Киев', units = 'temp_c'):
