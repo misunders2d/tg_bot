@@ -61,12 +61,26 @@ async def process_text(
         if current_status == 'requires_action':
             tool_calls = current_run.required_action.submit_tool_outputs.tool_calls
             tool_outputs = call_tools(tool_calls)
-            
+            if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+                print('running tool outputs') # for test bot
             func_run = client.beta.threads.runs.submit_tool_outputs(
                 thread_id=thread_id,
                 run_id=current_run.id,
                 tool_outputs=tool_outputs
                 )
+            current_status = 'queued'
+            while current_status in ('queued','in_progress'):
+                time.sleep(1.5)
+                current_func_run = client.beta.threads.runs.retrieve(thread_id = thread_id, run_id = func_run.id)
+                current_status = current_func_run.status
+                if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+                    print(current_status) # for test bot
+            if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+                print(f'functions processed, func_run status is {current_status}')
+            if current_status == 'requires_action':
+                print(current_func_run)
+                return 'Run not completed'
+
         elif current_status == 'expired':
             return "Timeout on OpenAI side, please try again"
         elif current_status == 'failed':
@@ -76,9 +90,14 @@ async def process_text(
                 await del_task
             else:
                 return f'Sorry, error occurred: {current_run.last_error}. Please try again.'
-        elif current_status == 'completed':
+        if current_status == 'completed':
             thread_messages = client.beta.threads.messages.list(thread_id)
             response = thread_messages.data[0].content[0].text.value
+        else:
+            response = f"run didn't complete, status {current_status}"
+        if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+            print(f'Latest message from openai: {response}')
+
     except Exception as e:
         print(e)
         response = 'Sorry, something went wrong on OpenAI side'

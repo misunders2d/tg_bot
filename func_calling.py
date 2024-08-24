@@ -19,39 +19,51 @@ def call_tools(tool_calls):
     for t in tool_calls:
         func_name = t.function.name
         attributes = json.loads(t.function.arguments)
+        print(func_name, attributes)
         try:
             func_response = globals()[func_name](attributes)
         except:
              # we just tell openAi we couldn't :)
             func_response = { "status" : f'Error in function call {func_name}({t.function.arguments})'}
         tool_outputs.append(  { "tool_call_id": t.id , "output": json.dumps(func_response) })
+    # print(tool_outputs)
     return tool_outputs
 
-def search_google(search_query, language = 'en', num = 3):
+def search_google(search_query = 'Happy day', language = 'en', num = 3):
     search = GoogleSearch({'q':search_query, 'api_key':SERP_API_KEY, 'language':language, 'num':num})
     result = search.get_dict()
-    answer = ''
-    answer += result.get('answer_box',{}).get('result','\n')
-    answer += result.get('knowledge_graph',{}).get('description','\n')
-    organic = ' More details below\n\n'+ '\n\n'.join([
-        ', '.join(
-        [
-            result.get('organic_results',{})[i].get('title','\n'),
-            result.get('organic_results',{})[i].get('link','\n'),
-            result.get('organic_results',{})[i].get('snippet','\n')
-            ]
-        )
-         for i in range(num)
-        ])
-    answer += organic
-    return answer.strip()
+    try:
+        answer = ''
+        answer += result.get('answer_box',{}).get('result','\n')
+        answer += result.get('knowledge_graph',{}).get('description','\n')
+        if len(result.get('organic_results')) < num:
+            num = len(result.get('organic_results'))
+        try:
+            organic = ' More details below\n\n'+ '\n\n'.join([
+                ', '.join(
+                [
+                    result.get('organic_results',{})[i].get('title','\n'),
+                    result.get('organic_results',{})[i].get('link','\n'),
+                    result.get('organic_results',{})[i].get('snippet','\n')
+                    ]
+                )
+                for i in range(num)
+                ])
+        except:
+            organic = ''
+        answer += organic
+    except Exception as e:
+        print(f'error: {e}')
+        answer = "There is not enough information to Google, provide more details"
+    print(f"Here's the informatino from google search: {answer.strip()}")
+    return f"Here's the informatino from google search: {answer.strip()}"
     
 def get_weather(location = 'Киев', units = 'temp_c'):
     base_url = 'http://api.weatherapi.com/v1'
     
     # forecast_days = 3
     
-    current_weather = f'{base_url}/current.json?key={weather_api_key}&q={location}&aqi=no'
+    current_weather = f'{base_url}/current.json?key={WEATHER_API_KEY}&q={location}&aqi=no'
     # forecast_weather =f'{base_url}/forecast.json?key={weather_api_key}&q={location}&days={forecast_days}&aqi=no&alerts=no'    
     result = requests.get(current_weather)
     current_json = result.json()
