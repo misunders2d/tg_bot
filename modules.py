@@ -135,7 +135,7 @@ async def image(image: str, caption: str, client: OpenAI, assistant_id: str, thr
             thread_id = thread_id,
             voice_bool = voice_bool,
             messages = messages,
-            tools = None
+            tools = []
             )
     except Exception as e:
         print(f'Error while processing image:\n{e}')
