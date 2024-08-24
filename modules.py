@@ -40,8 +40,11 @@ async def process_text(
         thread_id: str,
         voice_bool: bool = False,
         voice = 'onyx',
-        messages: List[dict] = None
+        messages: List[dict] = None,
+        **kwargs
         ) -> Union[str, tuple[bytes,str]]:
+    if not (tools:= kwargs.get('tools')):
+        pass
     msg_created = None
     if not messages:
         messages = [{'type':'text','text':text_input}]
@@ -55,6 +58,7 @@ async def process_text(
             thread_id=thread_id,
             assistant_id=assistant_id,
             additional_instructions='You reply in the shortest, most concise manner, unless instructed otherwise.',
+            tools = tools
             )
         if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
             print(current_run.status) # for test bot
@@ -130,7 +134,9 @@ async def image(image: str, caption: str, client: OpenAI, assistant_id: str, thr
             assistant_id = assistant_id,
             thread_id = thread_id,
             voice_bool = voice_bool,
-            messages = messages)
+            messages = messages,
+            tools = None
+            )
     except Exception as e:
         print(f'Error while processing image:\n{e}')
         response = "Sorry, couldn't process the image, please try again later"

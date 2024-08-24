@@ -82,10 +82,13 @@ def get_weather(location = 'Киев', units = 'temp_c'):
     current_json = result.json()
     temp = current_json['current'][units]
     text = current_json['current']['condition']['text']
-    # icon = current_json['current']['condition']['icon']
+    icon_link = current_json['current']['condition']['icon']
     # forecast = requests.get(forecast_weather)
-    
-    return f'Current temperature is {temp}, current condition is {text}'
+    result = f"""Current temperature is {temp}, current condition is {text}.
+    Make sure to include the raw link: https://{icon_link} (plain text, NOT markdown)
+    """
+
+    return result
 
 def parse_json_conditions(file):
     """
