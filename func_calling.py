@@ -19,7 +19,7 @@ def call_tools(tool_calls):
     for t in tool_calls:
         func_name = t.function.name
         attributes = json.loads(t.function.arguments)
-        print(func_name, attributes)
+        # print(func_name, attributes)
         try:
             func_response = globals()[func_name](attributes)
         except:
@@ -40,10 +40,10 @@ def search_google(search_query, language = 'en', num = 2, api_key = SERP_API_KEY
         "q": search_query.get('search_query'),
         "hl": language
         }
-    print(params) # TODO remove
+    # print(params) # TODO remove
     search = GoogleSearch(params)
     result = search.get_dict()
-    print('\n\n',result) # TODO remove
+    # print('\n\n',result) # TODO remove
     try:
         answer = ''
         answer += result.get('answer_box',{}).get('result','\n')
