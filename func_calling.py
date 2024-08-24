@@ -82,7 +82,7 @@ def get_weather(location = 'Киев', units = 'temp_c'):
     current_json = result.json()
     temp = current_json['current'][units]
     text = current_json['current']['condition']['text']
-    icon = current_json['current']['condition']['icon']
+    # icon = current_json['current']['condition']['icon']
     # forecast = requests.get(forecast_weather)
     
     return f'Current temperature is {temp}, current condition is {text}'
