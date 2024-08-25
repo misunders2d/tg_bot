@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 _ = load_dotenv('.env')
 
 import requests, json, chardet
-from serpapi import GoogleSearch
+# from serpapi import GoogleSearch
 # from openai import OpenAI
 
 SERP_API_KEY = os.getenv('SERP_API')
