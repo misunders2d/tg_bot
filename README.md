@@ -2,7 +2,7 @@
 TG bot with ChatGPT support, vision and voice capabilities.
 Latest updates enable the bot to perform basic real-time web search and weather reporting.
 
-Requires accounts with [OpenAI](https://openai.com/), [SerpAPI](https://serpapi.com/) (for Google search), [Deta](https://deta.space/), and [Weatherapi](https://www.weatherapi.com/)
+Requires accounts with [OpenAI](https://openai.com/), [Google Custom Search API](https://developers.google.com/custom-search/v1/overview), [Deta](https://deta.space/), and [Weatherapi](https://www.weatherapi.com/)
 
 
 Please make sure to include .env file with your api keys:
@@ -19,8 +19,9 @@ TG_KEY = 'your telegram bot api key'
 BOT_HANDLE = '@your_bot_handle (for group chats and debugging)'
 ADMIN_CHAT = Telegram chat id (INT) of the admin for advanced functions, like "push" messages
 
-SerpAPI:
-SERP_API = 'your serp api key'
+Google:
+GOOGLE_SEARCH_API = 'your google custom search json api'
+GOOGLE_SEARCH_ENGINE_ID = 'the custom search engine ID with google'
 
 WeatherAPI:
 WEATHER_API = 'your weather api key'

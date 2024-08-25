@@ -4,10 +4,13 @@ _ = load_dotenv('.env')
 
 import requests, json, chardet
 from serpapi import GoogleSearch
-from openai import OpenAI
+# from openai import OpenAI
 
 SERP_API_KEY = os.getenv('SERP_API')
 WEATHER_API_KEY = os.getenv('WEATHER_API')
+GOOGLE_SEARCH_API = os.getenv('GOOGLE_SEARCH_API')
+GOOGLE_SEARCH_ENGINE_ID = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
+BOT_HANDLE = os.getenv('BOT_HANDLE')
 
 def call_tools(tool_calls):
     """ Process "tool_calls that come straight from openai's run.
@@ -19,54 +22,44 @@ def call_tools(tool_calls):
     for t in tool_calls:
         func_name = t.function.name
         attributes = json.loads(t.function.arguments)
-        # print(func_name, attributes)
+        if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+            print(func_name, attributes)
         try:
             func_response = globals()[func_name](attributes)
         except:
              # we just tell openAi we couldn't :)
             func_response = { "status" : f'Error in function call {func_name}({t.function.arguments})'}
         tool_outputs.append(  { "tool_call_id": t.id , "output": json.dumps(func_response) })
-    # print(tool_outputs)
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print('tool_outputs: ',tool_outputs)
     return tool_outputs
 
 def search_google(search_query, language = 'en', num = 2, api_key = SERP_API_KEY):
     """
     basic Google search to provide top level results for any updated information that the bot has no access to
     """
+    ### google custom search calling
+    url = 'https://www.googleapis.com/customsearch/v1'
     params = {
-        "api_key": api_key,
-        "engine": "google",
-        "num": num,
-        "q": search_query.get('search_query'),
-        "hl": language
-        }
-    # print(params) # TODO remove
-    search = GoogleSearch(params)
-    result = search.get_dict()
-    # print('\n\n',result) # TODO remove
-    try:
+        'key': GOOGLE_SEARCH_API,
+        'cx': GOOGLE_SEARCH_ENGINE_ID,
+        'q': search_query.get('search_query'),
+        'hl':language,
+        'num':num
+    }
+    print(params) # TODO remove
+    # Make the request
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        results = response.json()
         answer = ''
-        answer += result.get('answer_box',{}).get('result','\n')
-        answer += result.get('knowledge_graph',{}).get('description','\n')
-        if len(result.get('organic_results')) < num:
-            num = len(result.get('organic_results'))
-        try:
-            organic = ' More details below\n\n'+ '\n\n'.join([
-                ', '.join(
-                [
-                    result.get('organic_results',{})[i].get('title','\n'),
-                    result.get('organic_results',{})[i].get('link','\n'),
-                    result.get('organic_results',{})[i].get('snippet','\n')
-                    ]
-                )
-                for i in range(num)
-                ])
-        except:
-            organic = ''
-        answer += organic
-    except Exception as e:
-        print(f'error: {e}')
-        answer = "There is not enough information to Google, provide more details"
+        for item in results.get('items', []):
+            answer += (f"Title: {item['title']}\n")
+            answer += (f"Link: {item['link']}\n")
+            answer += (f"Quick info: {item['snippet']}\n\n")
+    else:
+        print('Error:', response.status_code, response.text)    
+    # print('\n\n',result) # TODO remove
     # print(f"Here's the information from google search: {answer.strip()}")
     return f"Here's the information from google search: {answer.strip()}"
     

@@ -92,6 +92,7 @@ async def process_text(
             response = thread_messages.data[0].content[0].text.value
         else:
             response = f"run didn't complete, status {current_run.status}, last error: {current_run.last_error}"
+            cancelled_run = client.beta.threads.runs.create_and_poll(run_id = current_run.id, thread_id=thread_id)
         if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
             print(f'Latest message from openai: {response}')
 

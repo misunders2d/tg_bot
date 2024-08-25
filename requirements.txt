@@ -4,4 +4,3 @@ openai
 python-dotenv
 deta
 chardet
-google-search-results
