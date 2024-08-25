@@ -202,13 +202,16 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Reply to the user
         await send_action(chat_id, context, type = 'typing')
         response = await response_task
-        try:
-            await update.message.reply_text(response, parse_mode='MarkdownV2')
-        except:
+        msg_limit = 4095
+        responses = [response[i:i+msg_limit] for i in range(0,len(response),msg_limit)]
+        for response in responses:
             try:
-                await update.message.reply_text(response, parse_mode='Markdown')
+                await update.message.reply_text(response, parse_mode='MarkdownV2')
             except:
-                await update.message.reply_text(response)
+                try:
+                    await update.message.reply_text(response, parse_mode='Markdown')
+                except:
+                    await update.message.reply_text(response)
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by "/create" command and passes prompt to OpenAI to generate image
