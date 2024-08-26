@@ -93,13 +93,17 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by a photo in the message. The photo is processed
         using vision capabilities of OpenAI
     """
-    if update.message and update.message.text and update.message.chat:
+    if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
+        print(update) # for test bot
+    if update.message and (update.message.text or update.message.chat):
         try:
             chat_type: str = update.message.chat.type
             chat_id: str = str(update.message.chat.id)
         except Exception as e:
-            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}\n\n')
+            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error when processing image:\n {e}\n\n')
             return
+    else:
+        return
 
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
