@@ -93,11 +93,14 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by a photo in the message. The photo is processed
         using vision capabilities of OpenAI
     """
-    if not update.message:
-        return
+    if update.message and update.message.text and update.message.chat:
+        try:
+            chat_type: str = update.message.chat.type
+            chat_id: str = str(update.message.chat.id)
+        except AttributeError as e:
+            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
+            return
 
-    chat_type: str = update.message.chat.type
-    chat_id: str = str(update.message.chat.id)
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
     if not (text:= update.message.caption):
@@ -124,8 +127,14 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, current_voice: str = 'onyx'):
     """Separate function to process voice conversations"""
-    chat_type: str = update.message.chat.type
-    chat_id: str = str(update.message.chat.id)
+    if update.message and update.message.text and update.message.chat:
+        try:
+            chat_type: str = update.message.chat.type
+            chat_id: str = str(update.message.chat.id)
+        except AttributeError as e:
+            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
+            return
+
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
     if not (current_voice:= current_sessions.get(str(chat_id),{}).get('voice')):
