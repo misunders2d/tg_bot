@@ -97,7 +97,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             chat_type: str = update.message.chat.type
             chat_id: str = str(update.message.chat.id)
-        except AttributeError as e:
+        except Exception as e:
             await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
             return
 
@@ -131,7 +131,7 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
         try:
             chat_type: str = update.message.chat.type
             chat_id: str = str(update.message.chat.id)
-        except AttributeError as e:
+        except Exception as e:
             await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
             return
 
@@ -183,13 +183,13 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             chat_type: str = update.message.chat.type
             chat_id: str = str(update.message.chat.id)
-        except AttributeError as e:
+        except Exception as e:
             await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
             return
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
     try:
-        text = update.message.text
+        text = str(update.message.text).replace('None','')
     except:
         text = 'What is in these images?'
     reply_text = await process_replied_message(update, context)
