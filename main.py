@@ -98,7 +98,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_type: str = update.message.chat.type
             chat_id: str = str(update.message.chat.id)
         except Exception as e:
-            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
+            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}\n\n')
             return
 
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
@@ -132,7 +132,7 @@ async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, curre
             chat_type: str = update.message.chat.type
             chat_id: str = str(update.message.chat.id)
         except Exception as e:
-            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
+            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}\n\n')
             return
 
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
@@ -184,7 +184,7 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_type: str = update.message.chat.type
             chat_id: str = str(update.message.chat.id)
         except Exception as e:
-            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}')
+            await context.bot.send_message(chat_id = ADMIN_CHAT, text = f'{update} caused an error:\n {e}\n\n')
             return
     if BOT_HANDLE == '@my_temp_bot_for_testing_bot':
         print(chat_type, chat_id) # for test bot
