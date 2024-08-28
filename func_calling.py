@@ -47,7 +47,7 @@ def search_google(search_query, language = 'en', num = 2, api_key = SERP_API_KEY
         'hl':language,
         'num':num
     }
-    print(params) # TODO remove
+    # print(params) # TODO remove
     # Make the request
     response = requests.get(url, params=params)
     if response.status_code == 200:
