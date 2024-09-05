@@ -4,7 +4,7 @@ load_dotenv('.env')
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-import os, requests
+import os, requests, html
 from io import BytesIO
 from typing import Final, Literal
 
@@ -129,7 +129,7 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(image_info, parse_mode='Markdown')
             except Exception as e:
                 print(f"Can't send Markdown: {e}")
-                await update.message.reply_text(image_info)
+                await update.message.reply_text(html.escape(image_info), parse_mode ='HTML')
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, current_voice: str = 'onyx'):
     """Separate function to process voice conversations"""
@@ -228,7 +228,7 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text(response, parse_mode='Markdown')
                 except Exception as e:
                     print(f"Can't send Markdown: {e}")
-                    await update.message.reply_text(response)
+                    await update.message.reply_text(html.escape(response), parse_mode ='HTML')
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by "/create" command and passes prompt to OpenAI to generate image
