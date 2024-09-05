@@ -122,14 +122,9 @@ async def describe_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_action(chat_id, context, type = 'typing')
         image_info = await image_info_task
         try:
-            await update.message.reply_text(image_info, parse_mode='MarkdownV2')
-        except Exception as e:
-            print(f"Can't send Markdown_v2: {e}")
-            try:
-                await update.message.reply_text(image_info, parse_mode='Markdown')
-            except Exception as e:
-                print(f"Can't send Markdown: {e}")
-                await update.message.reply_text(html.escape(image_info), parse_mode ='HTML')
+            await update.message.reply_text(image_info, parse_mode='Markdown')
+        except:
+            await update.message.reply_text(html.escape(image_info), parse_mode ='HTML')
 
 async def accept_voice(update: Update, context: ContextTypes.DEFAULT_TYPE, current_voice: str = 'onyx'):
     """Separate function to process voice conversations"""
@@ -221,14 +216,9 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         responses = [response[i:i+msg_limit] for i in range(0,len(response),msg_limit)]
         for response in responses:
             try:
-                await update.message.reply_text(response, parse_mode='MarkdownV2')
-            except Exception as e:
-                print(f"Can't send Markdown_v2: {e}")
-                try:
-                    await update.message.reply_text(response, parse_mode='Markdown')
-                except Exception as e:
-                    print(f"Can't send Markdown: {e}")
-                    await update.message.reply_text(html.escape(response), parse_mode ='HTML')
+                await update.message.reply_text(response, parse_mode='Markdown')
+            except:
+                await update.message.reply_text(html.escape(response), parse_mode ='HTML')
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Separate function that is triggered by "/create" command and passes prompt to OpenAI to generate image
