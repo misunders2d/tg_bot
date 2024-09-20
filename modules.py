@@ -1,22 +1,25 @@
-import time
 from typing import List, Union
 from openai import OpenAI
 from openai.types.beta.threads.image_url_content_block import ImageURLContentBlock
 from io import BytesIO
-from deta import Deta
 from main import BOT_HANDLE
 from func_calling import search_google, get_weather, call_tools
+from google.cloud.exceptions import NotFound
 
-def check_thread(chat_id: str, deta_base: Deta):
-    """Checks if an OpenAI's thread is assigned to a specific TG chat_id in Deta database"""
-    result = deta_base.Base('chat_ids').fetch({"key":chat_id}).items
+def check_thread(chat_id: str, collection):
+    """Checks if an OpenAI's thread is assigned to a specific TG chat_id in Firebase database"""
+    result = collection.document(chat_id).get(['thread','voice']).to_dict()
     if len(result)>0:
-        return result[0]['thread'], result[0]['voice']
+        return result['thread'], result['voice']
     return False, False
 
-def push_to_deta(chat_id: str, thread_id: str, deta_base: Deta, voice = 'onyx'):
-    """updates thread and voice information for a specific chat in Deta database"""
-    deta_base.Base('chat_ids').put(key = chat_id, data = {'thread':thread_id, 'voice':voice})
+def push_to_firebase(chat_id: str, thread_id: str, collection, voice = 'onyx'):
+    """updates thread and voice information for a specific chat in Firebase database"""
+    try:
+        collection.document(chat_id).update({'thread':thread_id, 'voice':voice})
+    except NotFound:
+        collection.document(chat_id).create({'thread':thread_id, 'voice':voice}, chat_id)
+
 
 async def delete_img_messages(client: OpenAI, thread_id:str):
     """specific function to delete messages with image links after they've been processed.

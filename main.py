@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv('.env')
 
+import json
+
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -8,7 +10,10 @@ import os, requests, html
 from io import BytesIO
 from typing import Final, Literal
 
-from deta import Deta
+import firebase_admin
+from firebase_admin import credentials, firestore
+from google.cloud.firestore import CollectionReference
+
 from openai import OpenAI, NotFoundError
 from openai.types.beta.thread import Thread
 
@@ -18,12 +23,17 @@ ASSISTANT_ID: Final = os.getenv('ASSISTANT_ID')
 OPENAI_KEY: Final = os.getenv('AI_KEY')
 TG_KEY: Final = os.getenv('TG_KEY')
 BOT_HANDLE = os.getenv('BOT_HANDLE')
-DETA_ID: Final = os.getenv('DETA_KEY')
+FIREBASE_CONFIG: Final = json.loads(os.getenv('FIREBASE_CONFIG'))
 ADMIN_CHAT: int = int(os.getenv('ADMIN_CHAT'))
 
 client: OpenAI = OpenAI(api_key = OPENAI_KEY)
 
-deta_base: Deta = Deta(DETA_ID)
+creds = credentials.Certificate(FIREBASE_CONFIG)
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(creds)
+
+db = firestore.client()
+collection = db.collection('chat_threads')
 
 current_sessions: dict = {}
 
@@ -48,30 +58,30 @@ def retrieve_thread(chat_id: str) -> Thread:
     
     # first, get voice value from local or remote db and assign a default value:
     if not (voice:=current_sessions.get(chat_id,{}).get('voice')):
-        if not (voice:=modules.check_thread(chat_id, deta_base)[1]):
+        if not (voice:=modules.check_thread(chat_id, collection)[1]):
             voice: str = 'onyx'
     
     if not (current_thread:= current_sessions.get(chat_id,{}).get('thread')):
-        # thread not found in local "current_sessions dict", check in deta db:
+        # thread not found in local "current_sessions dict", check in firebase db:
 
-        if not (chat_thread_id:=modules.check_thread(chat_id, deta_base)[0]):
-            # thread_id not found in remote deta db either, create one
+        if not (chat_thread_id:=modules.check_thread(chat_id, collection)[0]):
+            # thread_id not found in remote firebase db either, create one
             current_thread: Thread = create_thread(chat_id)
-            modules.push_to_deta(chat_id, current_thread.id, deta_base, voice = voice) #update thread id in remote db
+            modules.push_to_firebase(chat_id, current_thread.id, collection, voice = voice) #update thread id in remote db
             chat_thread_id = current_thread.id
         else:
             try:
                 current_thread = client.beta.threads.retrieve(thread_id = chat_thread_id) # check if the stored thread still exists in OpenAI
             except NotFoundError:
                 new_thread = create_thread() # create a new thread in OpenAI
-                modules.push_to_deta(chat_id, new_thread.id, deta_base, voice = voice) # replace old thread id in remote db with newly created one
+                modules.push_to_firebase(chat_id, new_thread.id, collection, voice = voice) # replace old thread id in remote db with newly created one
                 current_thread = client.beta.threads.retrieve(thread_id = new_thread.id) # retrieve new thread from OpenAI
     else:
         try:
             current_thread = client.beta.threads.retrieve(thread_id = current_thread.id) # check if the stored thread still exists in OpenAI
         except NotFoundError:
             new_thread = create_thread() # create a new thread in OpenAI
-            modules.push_to_deta(chat_id, new_thread.id, deta_base, voice = voice) # replace old thread id in remote db with newly created one
+            modules.push_to_firebase(chat_id, new_thread.id, collection, voice = voice) # replace old thread id in remote db with newly created one
             current_thread = client.beta.threads.retrieve(thread_id = new_thread.id) # retrieve new thread from OpenAI
 
 
@@ -249,15 +259,15 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             await context.bot.send_message(chat_id=chat_id,text =f"Oops, this didn't work out, here's the error message\n{e}")
         
-def get_chat_ids(deta_base: Deta = deta_base):
-    """Pull existing chat IDs from Deta db"""
-    result = deta_base.Base('chat_ids').fetch().items
-    return [int(x['key']) for x in result]
+def get_chat_ids(collection: CollectionReference = collection):
+    """Pull existing chat IDs from Firebase db"""
+    result = collection.stream()
+    return [x.id for x in result] #[int(x['key']) for x in result]
 
 async def push(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin function used to push messages (updates and warnings) to all chats"""
     if update.message.chat.id == ADMIN_CHAT:
-        chat_ids = get_chat_ids(deta_base=deta_base)
+        chat_ids = get_chat_ids(collection=collection)
         if len(chat_ids) > 0:
             for chat in chat_ids:
                 await context.bot.send_message(chat_id = chat, text = update.message.text.replace('/push','').strip())
@@ -274,7 +284,7 @@ async def voice_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip().lower()
     voice = text.replace('/voice_change','').strip()
     if voice in voices:
-        modules.push_to_deta(chat_id = str(chat_id), thread_id = current_thread.id, deta_base=deta_base, voice = voice)
+        modules.push_to_firebase(chat_id = str(chat_id), thread_id = current_thread.id, collection=collection, voice = voice)
         current_sessions[str(chat_id)]['voice'] = voice
         await update.message.reply_text(f'Changed the voice of the assistant to "{voice}"')
     else:

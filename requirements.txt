@@ -2,5 +2,5 @@ python-telegram-bot
 requests
 openai
 python-dotenv
-deta
 chardet
+firebase-admin
